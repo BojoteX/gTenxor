@@ -31,7 +31,7 @@ namespace Bojote.gTenxor
                         if (SC == null)
                             return;
 
-                        await SC.Connect(portName, BaudRate, ResetCon: true);
+                        await SC.Connect(portName, BaudRate, ResetCon: false);
 
                         if (!SC.IsConnected)
                             return;

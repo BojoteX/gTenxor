@@ -96,7 +96,7 @@ namespace Bojote.gTenxor
             }
         }
 
-        public async Task<SerialConnection> Connect(string portName, int BaudRate, bool ResetCon = true)
+        public async Task<SerialConnection> Connect(string portName, int BaudRate, bool ResetCon = false)
         {
             if (IsConnected)
             {
