@@ -300,6 +300,8 @@ namespace Bojote.gTenxor
                 // This is just to send the string to Query device state
                 ChangeDeviceState(Main.Constants.QueryStatus, portName);
 
+                Main.SerialOK = true;
+
                 // This is just to send the string to change the device state
                 string _data = Main.PrintObjectProperties(Plugin.Settings);
                 DebugOutputTextBox.AppendText(_data);

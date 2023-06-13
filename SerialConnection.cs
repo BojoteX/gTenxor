@@ -102,6 +102,7 @@ namespace Bojote.gTenxor
             {
                 await Task.Delay(2000);
                 SimHub.Logging.Current.Info($"Was already connected! still waited 2 seconds to allow Device to respond to requests");
+                Main.SerialOK = true;
                 return this;
             }
 
@@ -138,6 +139,7 @@ namespace Bojote.gTenxor
                 {
                     await Task.Delay(2000);
                     SimHub.Logging.Current.Info($"Connected! and waited 2 seconds to allow Device to respond to requests");
+                    Main.SerialOK = true;
                     return this;
                 }
                 else

@@ -67,7 +67,7 @@ namespace Bojote.gTenxor
         /// </summary>
         /// <param name="pluginManager"></param>
         /// <param name="data">Current game data, including current and previous data frame.</param>
-        public void DataUpdate(PluginManager pluginManager, ref GameData data)
+        public void XXXDataUpdate(PluginManager pluginManager, ref GameData data)
         {
             // Define the value of our property (declared in init)
             if (data.GameRunning)
@@ -116,12 +116,10 @@ namespace Bojote.gTenxor
                         byte leftServoAngle = (byte)Math.Round(l);
                         byte rightServoAngle = (byte)Math.Round(r);
 
-
                         // Logging data just before it is sent
-                        string logEntry = ($"L:{Math.Round(l)} - R:{Math.Round(r)}  >  Sway: {Math.Round(sway)}  |  Surge: {Math.Round(decel)}");
+                        string logEntry = ($" {leftServoAngle}, {rightServoAngle} ");
                         File.AppendAllText("logs/Tenxor.txt", logEntry + Environment.NewLine);
 
-
                         byte[] serialData = new byte[] { leftServoAngle, rightServoAngle };
                         SerialConnection.SerialPort.Write(serialData, 0, 2);
                     }
@@ -129,7 +127,7 @@ namespace Bojote.gTenxor
             }
         }
 
-        public void XXDataUpdate(PluginManager pluginManager, ref GameData data)
+        public void DataUpdate(PluginManager pluginManager, ref GameData data)
         {
             // Define the value of our property (declared in init)
             if (data.GameRunning)
@@ -166,97 +164,9 @@ namespace Bojote.gTenxor
                             (r, l) = (l, r);
                         }
 
-                        // Initial run: Set smoothed values to initial values
-                        if (this.lb4 == 0)
-                        {
-                            this.rb4 = r;
-                            this.lb4 = l;
-                        }
-                        else
-                        {
-                            // Apply smoothing
-                            double tc = 1 + Settings.Smooth;
-                            this.lb4 += ((l - this.lb4) / tc);
-                            this.rb4 += ((r - this.rb4) / tc);
-                        }
-
-                        // Apply deadzone
-                        if (deadzoneSquared > 0)
-                        {
-                            if ((l - this.lb4) * (l - this.lb4) <= deadzoneSquared)
-                            {
-                                this.lb4 = l;
-                            }
-
-                            if ((r - this.rb4) * (r - this.rb4) <= deadzoneSquared)
-                            {
-                                this.rb4 = r;
-                            }
-                        }
-
-                        // Clipping so that l and r are never > tmax or less than 2, 3
-                        l = Math.Max(Math.Min(this.lb4, tmax), 2);
-                        r = Math.Max(Math.Min(this.rb4, tmax), 3);
-
-                        // For future use. Trigger an event if both l and r are at tmax
-                        if (l == tmax && r == tmax)
-                        {
-                            // this.TriggerEvent("MaxTension");
-                        }
-
-                        byte leftServoAngle = (byte)Math.Round(l);
-                        byte rightServoAngle = (byte)Math.Round(r);
-
-                        // Logging data just before it is sent
-                        string logEntry = String.Format("{0} | Sway: {1,5} | Surge: {2,5} | Left: {3,3} | Right: {4,3}",
-                                                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                                                        Math.Round(sway), Math.Round(decel), leftServoAngle, rightServoAngle);
-                        File.AppendAllText("logs/ChatGPT.txt", logEntry + Environment.NewLine);
 
 
-                        byte[] serialData = new byte[] { leftServoAngle, rightServoAngle };
-                        SerialConnection.SerialPort.Write(serialData, 0, 2);
-                    }
-                }
-            }
-        }
 
-        public void HybridDataUpdate(PluginManager pluginManager, ref GameData data)
-        {
-            // Define the value of our property (declared in init)
-            if (data.GameRunning)
-            {
-                if (data.OldData != null && data.NewData != null)
-                {
-                    if (SerialOK)
-                    {
-                        // Tmax should never be a number over 180;
-                        int tmax = Math.Max(Math.Min(Settings.Tmax, 180), 0);
-
-                        // We can increase the sensitivity by changing the divisor. Set to 0 to skip
-                        double deadzoneSquared = (Settings.Deadzone / 100) * (Settings.Deadzone / 100);
-
-                        // Reverse if neccesary
-                        double decel = (data.NewData.AccelerationSurge ?? 0) * (Settings.DecelReversed ? -1 : 1);
-                        double sway = (data.NewData.AccelerationSway ?? 0) * (Settings.SwayReversed ? -1 : 1);
-
-                        // Apply gains
-                        sway *= Settings.YawGain;
-                        decel *= Settings.DecelGain;
-
-                        double decelSquared = decel * decel;
-                        double swaySquared = sway * sway;
-                        double decelDoubled = decel * 2;
-
-                        // Compute l and r
-                        double r = Math.Sqrt(decelSquared + swaySquared);
-                        double l = decelDoubled - r;
-
-                        // Swap if necessary (be careful + or - values have an effect in which servo is being affected
-                        if (sway < 0)
-                        {
-                            (r, l) = (l, r);
-                        }
 
                         // Initial run: Set smoothed values to initial values
                         if (this.lb4 == 0)
@@ -286,25 +196,25 @@ namespace Bojote.gTenxor
                             }
                         }
 
+
+
+
                         // Clipping so that l and r are never > tmax or less than 2, 3
                         l = Math.Max(Math.Min(this.lb4, tmax), 2);
                         r = Math.Max(Math.Min(this.rb4, tmax), 3);
 
                         // For future use. Trigger an event if both l and r are at tmax
-                        if (l == tmax && r == tmax)
-                        {
+                        //if (l == tmax && r == tmax)
+                        //{
                             // this.TriggerEvent("MaxTension");
-                        }
+                        //}
 
                         byte leftServoAngle = (byte)Math.Round(l);
                         byte rightServoAngle = (byte)Math.Round(r);
 
                         // Logging data just before it is sent
-                        string logEntry = String.Format("{0} | Sway: {1,5} | Surge: {2,5} | Left: {3,3} | Right: {4,3}",
-                                                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                                                        Math.Round(sway), Math.Round(decel), leftServoAngle, rightServoAngle);
-                        File.AppendAllText("logs/ChatGPT.txt", logEntry + Environment.NewLine);
-
+                        string logEntry = ($" {leftServoAngle}, {rightServoAngle} ");
+                        File.AppendAllText("logs/Tenxor.txt", logEntry + Environment.NewLine);
 
                         byte[] serialData = new byte[] { leftServoAngle, rightServoAngle };
                         SerialConnection.SerialPort.Write(serialData, 0, 2);
