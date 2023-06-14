@@ -263,7 +263,6 @@ namespace Bojote.gTenxor
             }
 
             /*
-             * Just for Debugging
             else if (sender == ToggleButton)
             {
                 // This is just to send the string to change the device state

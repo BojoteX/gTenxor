@@ -193,17 +193,26 @@ namespace Bojote.gTenxor
             // Declare a property available in the property list, this gets evaluated "on demand" (when shown or used in formulas)
             this.AttachDelegate("CurrentDateTime", () => DateTime.Now);
 
+            // Declare an action which can be called
+            this.AddAction("ToggleLiveBelt", (a, b) =>
+            {
+                if (SerialOK)
+                    SerialOK = false;
+                else
+                    SerialOK = true;
+            });
+
             // Declare an event
             this.AddEvent("MaxTension");
 
             // Declare an action which can be called
-            this.AddAction("Increment Max tension",(a, b) =>
+            this.AddAction("IncrementMaxTension",(a, b) =>
             {
             Settings.Tmax++;
             });
 
             // Declare an action which can be called
-            this.AddAction("Decrement Max tension", (a, b) =>
+            this.AddAction("DecrementMaxTension", (a, b) =>
             {
                 Settings.Tmax--;
             });

@@ -18,7 +18,7 @@ namespace Bojote.gTenxor
         {
             int BaudRate = int.Parse(Settings.SelectedBaudRate);
 
-            int timeoutMilliseconds = 5000;  // 5 seconds timeout
+            int timeoutMilliseconds = 1000;  // 5 seconds timeout
             string[] actualPortNames = SerialPort.GetPortNames();
 
             var tasks = new List<Task>();

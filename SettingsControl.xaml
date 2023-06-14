@@ -3,55 +3,60 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:styles="clr-namespace:SimHub.Plugins.Styles;assembly=SimHub.Plugins"
-             xmlns:Custom="http://metro.mahapps.com/winfx/xaml/controls"
-             mc:Ignorable="d"
-             d:DesignHeight="570" d:DesignWidth="820"
+             xmlns:styles="clr-namespace:SimHub.Plugins.Styles;assembly=SimHub.Plugins" mc:Ignorable="d"
+             xmlns:Custom="http://metro.mahapps.com/winfx/xaml/controls" xmlns:ui="clr-namespace:SimHub.Plugins.UI;assembly=SimHub.Plugins"
+             d:DesignHeight="700" d:DesignWidth="820"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
         <Grid Margin="20,0,0,0">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <!-- Left side controls -->
-            <StackPanel Grid.Column="0" Margin="0,0,0,0">
-                <StackPanel Margin="0,0,0,10">
-                    <styles:SHSectionTitle x:Name="Section" HorizontalAlignment="Left">Connection Settings</styles:SHSectionTitle>
-                </StackPanel>
+                <!-- Left side controls -->
+                <StackPanel Grid.Column="0" Margin="0,0,0,0">
+                    <StackPanel Margin="0,0,0,10">
+                        <styles:SHSectionTitle x:Name="Section" HorizontalAlignment="Left">Connection Settings</styles:SHSectionTitle>
+                    </StackPanel>
 
 
-                <StackPanel Grid.Column="0" Margin="0,0,0,0" Orientation="Horizontal">
-                    <!-- Device Port -->
-                    <StackPanel Width="110">
-                        <TextBlock Text="Device Port:" Margin="0,0,15,5" />
-                        <ComboBox x:Name="SerialDevicesComboBox" Width="95" Margin="0,0,15,0"
+                    <StackPanel Grid.Column="0" Margin="0,0,0,0" Orientation="Horizontal">
+                        <!-- Device Port -->
+                        <StackPanel Width="110">
+                            <TextBlock Text="Device Port:" Margin="0,0,15,5" />
+                            <ComboBox x:Name="SerialDevicesComboBox" Width="95" Margin="0,0,15,0"
                   SelectedItem="{Binding SelectedSerialDevice}"
                   ItemsSource="{Binding SerialConnection.SerialDevices}" />
-                    </StackPanel>
+                        </StackPanel>
 
-                    <!-- Baud Rate -->
-                    <StackPanel Width="110">
-                        <TextBlock Text="Baud Rate:" Margin="15,0,15,5" />
-                        <ComboBox x:Name="BaudRateComboBox" Width="95" Margin="15,0,0,0"
+                        <!-- Baud Rate -->
+                        <StackPanel Width="110">
+                            <TextBlock Text="Baud Rate:" Margin="15,0,15,5" />
+                            <ComboBox x:Name="BaudRateComboBox" Width="95" Margin="15,0,0,0"
                   SelectedItem="{Binding SelectedBaudRate}"
                   ItemsSource="{Binding SerialConnection.BaudRates}" />
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-                <StackPanel Margin="0,15,0,0">
+                    <StackPanel Margin="0,15,0,0">
 
-                    <ToggleButton x:Name="ConnectCheckBox" FontSize="16" Width="220" Height="40" IsChecked="{Binding ConnectToSerialDevice}">
-                        <ToggleButton.Template>
-                            <ControlTemplate TargetType="ToggleButton">
-                                <Border x:Name="border" Background="DarkGray" Padding="5" CornerRadius="10">
-                                    <ContentPresenter x:Name="contentPresenter" 
+                        <ToggleButton x:Name="ConnectCheckBox" FontSize="16" Width="220" Height="40" IsChecked="{Binding ConnectToSerialDevice}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="border" Background="DarkGray" Padding="5" CornerRadius="10">
+                                        <ContentPresenter x:Name="contentPresenter" 
                                   Content="{TemplateBinding Content}" 
                                   HorizontalAlignment="Center" 
                                   VerticalAlignment="Center" />
-                                </Border>
+                                    </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsChecked" Value="True">
                                         <Setter Property="Content" Value="DISCONNECT"/>
@@ -66,125 +71,154 @@
                                     <Trigger Property="IsMouseOver" Value="True">
                                         <Setter TargetName="border" Property="Background" Value="Green" />
                                     </Trigger>
+                                    
+                                    <!--
+                                    <MultiTrigger>
+                                        <MultiTrigger.Conditions>
+                                            <Condition Property="IsMouseOver" Value="True" />
+                                            <Condition Property="IsChecked" Value="True" />
+                                        </MultiTrigger.Conditions>
+                                        <Setter TargetName="border" Property="Background" Value="#666666" />
+                                    </MultiTrigger>
+                                    -->
+                                    
                                 </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </ToggleButton.Template>
-                    </ToggleButton>
-                </StackPanel>
-                <StackPanel Margin="0,30,0,10">
-                    <styles:SHSectionTitle x:Name="Title" HorizontalAlignment="Left">Advanced Settings</styles:SHSectionTitle>
-                </StackPanel>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                    </StackPanel>
+                    
+                    <StackPanel Margin="0,30,0,10">
+                        <styles:SHSectionTitle x:Name="Title" HorizontalAlignment="Left">Advanced Settings</styles:SHSectionTitle>
+                    </StackPanel>
 
-                <CheckBox x:Name="MaxTest" Content="Test Max Tension" Margin="0,5,0,5"
+                    <CheckBox x:Name="MaxTest" Content="Test Max Tension" Margin="0,5,0,5"
                           IsChecked="{Binding MaxTest}"
                           Checked="CheckBox_Checked"
                           Unchecked="CheckBox_Unchecked" />
 
-                <CheckBox x:Name="SwayReversed" Content="Sway Reversed" Margin="0,0,0,5"
+                    <CheckBox x:Name="SwayReversed" Content="Sway Reversed" Margin="0,0,0,5"
                           IsChecked="{Binding SwayReversed}"
                           Checked="CheckBox_Checked"
                           Unchecked="CheckBox_Unchecked" />
 
-                <CheckBox x:Name="DecelReversed" Content="Surge Reversed" Margin="0,0,0,10"
+                    <CheckBox x:Name="DecelReversed" Content="Surge Reversed" Margin="0,0,0,10"
                           IsChecked="{Binding DecelReversed}"
                           Checked="CheckBox_Checked"
                           Unchecked="CheckBox_Unchecked" />
 
-                <StackPanel Margin="0,10">
-                    <styles:SHButtonPrimary x:Name="AutodetectButton" HorizontalAlignment="Left" Click="Button_Click">Autodetect Device</styles:SHButtonPrimary>
+                    <StackPanel Margin="0,10">
+                        <styles:SHButtonPrimary x:Name="AutodetectButton" HorizontalAlignment="Left" Click="Button_Click">Autodetect Device</styles:SHButtonPrimary>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10">
+                        <TextBlock Width="200" Height="170" TextWrapping="Wrap" TextAlignment="Justify">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing  sum dolor sit amet, consectetur adipiscing  elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.d est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing  elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.d est laborum.
+                        </TextBlock>
+                    </StackPanel>
+
+                <!--
+
+                    <StackPanel Margin="0,10">
+                        <styles:SHButtonSecondary x:Name="ToggleButton" HorizontalAlignment="Left" Click="Button_Click">Handshake Mode</styles:SHButtonSecondary>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10">
+                        <styles:SHButtonSecondary x:Name="ToggleButton2" HorizontalAlignment="Left" Click="Button_Click">Processing Mode</styles:SHButtonSecondary>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10">
+                        <styles:SHButtonSecondary x:Name="Debugeador" HorizontalAlignment="Left" Click="Button_Click">Debug</styles:SHButtonSecondary>
+                    </StackPanel>
+                
+                -->
+
+                </StackPanel>
+                <!-- Right side sliders -->
+                <StackPanel Grid.Column="1" Margin="30,0,0,10">
+
+                    <StackPanel Margin="0,0,0,10">
+                        <styles:SHSectionTitle x:Name="Section2" HorizontalAlignment="Left">Servo Control</styles:SHSectionTitle>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10">
+                        <Label Content="Left Motor Offset" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Slider x:Name="LeftOffset" Minimum="0" Maximum="179" TickFrequency="1" Width="150" Value="{Binding LeftOffset}" ValueChanged="Slider_ValueChanged" />
+                            <Custom:NumericUpDown Minimum="0" Maximum="179" Value="{Binding LeftOffset}" Margin="10,0,0,0" Width="80" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10">
+                        <Label Content="Right Motor Offset" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Slider x:Name="RightOffset" Minimum="0" Maximum="179" TickFrequency="1" Width="150" Value="{Binding RightOffset}" ValueChanged="Slider_ValueChanged" />
+                            <Custom:NumericUpDown Minimum="0" Maximum="179" Value="{Binding RightOffset}" Margin="10,0,0,0" Width="80" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10">
+                        <Label Content="Max Tension" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Slider x:Name="Tmax" Minimum="3" Maximum="180" TickFrequency="1" Width="150" Value="{Binding Tmax}" ValueChanged="Slider_ValueChanged" />
+                            <Custom:NumericUpDown Minimum="3" Maximum="180" Value="{Binding Tmax}" Margin="10,0,0,0" Width="80" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10">
+                        <Label Content="Surge Gain" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Slider x:Name="DecelGain" Minimum="0" Maximum="10" TickFrequency="1" Width="150" Value="{Binding DecelGain}" ValueChanged="Slider_ValueChanged" />
+                            <Custom:NumericUpDown Minimum="0" Maximum="10" Value="{Binding DecelGain}" Margin="10,0,0,0" Width="80" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10">
+                        <Label Content="Sway Gain" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Slider x:Name="YawGain" Minimum="0" Maximum="10" TickFrequency="1" Width="150" Value="{Binding YawGain}" ValueChanged="Slider_ValueChanged" />
+                            <Custom:NumericUpDown Minimum="0" Maximum="10" Value="{Binding YawGain}" Margin="10,0,0,0" Width="80" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10">
+                        <Label Content="Smooth" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Slider x:Name="Smooth" Minimum="0" Maximum="10" TickFrequency="1" Width="150" Value="{Binding Smooth}" ValueChanged="Slider_ValueChanged" />
+                            <Custom:NumericUpDown Minimum="0" Maximum="10" Value="{Binding Smooth}" Margin="10,0,0,0" Width="80" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,10">
+                        <Label Content="Servo Deadzone" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Slider x:Name="Deadzone" Minimum="0" Maximum="10" TickFrequency="1" Width="150" Value="{Binding Deadzone}" ValueChanged="Slider_ValueChanged" />
+                            <Custom:NumericUpDown Minimum="0" Maximum="10" Value="{Binding Deadzone}" Margin="10,0,0,0" Width="80" />
+                        </StackPanel>
+                    </StackPanel>
+
                 </StackPanel>
 
-                <StackPanel Margin="0,10">
-                    <styles:SHButtonSecondary x:Name="ToggleButton" HorizontalAlignment="Left" Click="Button_Click">Handshake Mode</styles:SHButtonSecondary>
+                <StackPanel Grid.Column="2" Margin="30,0,0,10">
+
+                    <StackPanel Margin="0,0,0,10">
+                        <styles:SHSectionTitle x:Name="Section3" HorizontalAlignment="Left">Message Window</styles:SHSectionTitle>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,10">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <TextBox x:Name="DebugOutputTextBox" Text="{Binding DebugOutput}" Width="250" Height="500" IsReadOnly="True" Grid.Column="2"/>
+                        </ScrollViewer>
+                    </StackPanel>
+
                 </StackPanel>
 
-                <StackPanel Margin="0,10">
-                    <styles:SHButtonSecondary x:Name="ToggleButton2" HorizontalAlignment="Left" Click="Button_Click">Processing Mode</styles:SHButtonSecondary>
-                </StackPanel>
-
-                <StackPanel Margin="0,10">
-                    <styles:SHButtonSecondary x:Name="Debugeador" HorizontalAlignment="Left" Click="Button_Click">Debug</styles:SHButtonSecondary>
-                </StackPanel>
-
-            </StackPanel>
-            <!-- Right side sliders -->
-            <StackPanel Grid.Column="1" Margin="30,0,0,10">
-
-                <StackPanel Margin="0,0,0,10">
-                    <styles:SHSectionTitle x:Name="Section2" HorizontalAlignment="Left">Servo Control</styles:SHSectionTitle>
-                </StackPanel>
-
-                <StackPanel Margin="0,10">
-                    <Label Content="Left Motor Offset" />
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Slider x:Name="LeftOffset" Minimum="0" Maximum="179" TickFrequency="1" Width="150" Value="{Binding LeftOffset}" ValueChanged="Slider_ValueChanged" />
-                        <Custom:NumericUpDown Minimum="0" Maximum="179" Value="{Binding LeftOffset}" Margin="10,0,0,0" Width="80" />
+                <StackPanel Margin="0,0,0,0" Grid.ColumnSpan="3" Grid.Row="1" Grid.Column="0">
+                    <StackPanel Margin="0,0,0,0">
+                        <ui:ControlsEditor FriendlyName="Toggle Live Belt" ActionName="Main.ToggleLiveBelt"></ui:ControlsEditor>
                     </StackPanel>
                 </StackPanel>
-
-                <StackPanel Margin="0,10">
-                    <Label Content="Right Motor Offset" />
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Slider x:Name="RightOffset" Minimum="0" Maximum="179" TickFrequency="1" Width="150" Value="{Binding RightOffset}" ValueChanged="Slider_ValueChanged" />
-                        <Custom:NumericUpDown Minimum="0" Maximum="179" Value="{Binding RightOffset}" Margin="10,0,0,0" Width="80" />
-                    </StackPanel>
-                </StackPanel>
-
-                <StackPanel Margin="0,10">
-                    <Label Content="Max Tension" />
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Slider x:Name="Tmax" Minimum="3" Maximum="180" TickFrequency="1" Width="150" Value="{Binding Tmax}" ValueChanged="Slider_ValueChanged" />
-                        <Custom:NumericUpDown Minimum="3" Maximum="180" Value="{Binding Tmax}" Margin="10,0,0,0" Width="80" />
-                    </StackPanel>
-                </StackPanel>
-
-                <StackPanel Margin="0,10">
-                    <Label Content="Surge Gain" />
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Slider x:Name="DecelGain" Minimum="1" Maximum="10" TickFrequency="1" Width="150" Value="{Binding DecelGain}" ValueChanged="Slider_ValueChanged" />
-                        <Custom:NumericUpDown Minimum="1" Maximum="10" Value="{Binding DecelGain}" Margin="10,0,0,0" Width="80" />
-                    </StackPanel>
-                </StackPanel>
-
-                <StackPanel Margin="0,10">
-                    <Label Content="Sway Gain" />
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Slider x:Name="YawGain" Minimum="1" Maximum="10" TickFrequency="1" Width="150" Value="{Binding YawGain}" ValueChanged="Slider_ValueChanged" />
-                        <Custom:NumericUpDown Minimum="1" Maximum="10" Value="{Binding YawGain}" Margin="10,0,0,0" Width="80" />
-                    </StackPanel>
-                </StackPanel>
-
-                <StackPanel Margin="0,10">
-                    <Label Content="Smooth" />
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Slider x:Name="Smooth" Minimum="0" Maximum="10" TickFrequency="1" Width="150" Value="{Binding Smooth}" ValueChanged="Slider_ValueChanged" />
-                        <Custom:NumericUpDown Minimum="0" Maximum="10" Value="{Binding Smooth}" Margin="10,0,0,0" Width="80" />
-                    </StackPanel>
-                </StackPanel>
-
-                <StackPanel Margin="0,10">
-                    <Label Content="Servo Deadzone" />
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Slider x:Name="Deadzone" Minimum="0" Maximum="10" TickFrequency="1" Width="150" Value="{Binding Deadzone}" ValueChanged="Slider_ValueChanged" />
-                        <Custom:NumericUpDown Minimum="0" Maximum="10" Value="{Binding Deadzone}" Margin="10,0,0,0" Width="80" />
-                    </StackPanel>
-                </StackPanel>
-
-            </StackPanel>
-
-            <StackPanel Grid.Column="2" Margin="30,0,0,10">
-
-                <StackPanel Margin="0,0,0,10">
-                    <styles:SHSectionTitle x:Name="Section3" HorizontalAlignment="Left">Message Window</styles:SHSectionTitle>
-                </StackPanel>
-
-                <StackPanel Margin="0,0,0,10">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <TextBox x:Name="DebugOutputTextBox" Text="{Binding DebugOutput}" Width="250" Height="500" IsReadOnly="True" Grid.Column="2"/>
-                    </ScrollViewer>
-                </StackPanel>
-
-            </StackPanel>
+            
         </Grid>
-    </ScrollViewer>
+        </ScrollViewer>
 </UserControl>
