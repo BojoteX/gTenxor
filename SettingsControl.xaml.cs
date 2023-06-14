@@ -250,7 +250,9 @@ namespace Bojote.gTenxor
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            string portName = Plugin.Settings.SelectedSerialDevice; 
+            await Task.Delay(1);
+            string portName = Plugin.Settings.SelectedSerialDevice;
+            SimHub.Logging.Current.Info($"Currently selected port is {portName}");
 
             if (sender == AutodetectButton)
             {
@@ -258,24 +260,21 @@ namespace Bojote.gTenxor
                     return;
 
                 AutoDetectDevice(Plugin.Settings);
-                await Task.Delay(1);
             }
 
-#if DEBUG
-            // Code to include only in debug configuration
-            SimHub.Logging.Current.Info("Debug mode is enabled.");
-
-            if (sender == ToggleButton)
+            /*
+             * Just for Debugging
+            else if (sender == ToggleButton)
             {
                 // This is just to send the string to change the device state
                 await ChangeDeviceState(Main.Constants.HandShakeSnd, portName);
             }
-            if (sender == ToggleButton2)
+            else if (sender == ToggleButton2)
             {
                 // This is just to send the string to change the device state
                 await ChangeDeviceState(Main.Constants.uniqueID, portName);
             }
-            if (sender == Debugeador)
+            else if (sender == Debugeador)
             {
                 // This is just to send the string to Query device state
                 await ChangeDeviceState(Main.Constants.QueryStatus, portName);
@@ -284,12 +283,13 @@ namespace Bojote.gTenxor
                 string _data = Main.PrintObjectProperties(Plugin.Settings);
                 OutputMsg(_data);
             }
-#endif
+            */
+
         }
 
-            // The following are the actual events we just created above in settings control
-            // Event handler for SerialDevicesComboBox selection change
-            private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        // The following are the actual events we just created above in settings control
+        // Event handler for SerialDevicesComboBox selection change
+        private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (sender == SerialDevicesComboBox)
             {
