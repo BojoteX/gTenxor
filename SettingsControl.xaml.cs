@@ -241,7 +241,7 @@ namespace Bojote.gTenxor
             SimHub.Logging.Current.Info("END -> SettingsControl_UnLoaded");
         }
 
-        private bool alreadyConnectedError()
+        private bool AlreadyConnectedError()
         {
             bool isError = false;
             if (ConnectCheckBox.IsChecked == true)
@@ -262,7 +262,7 @@ namespace Bojote.gTenxor
             if (sender == AutodetectButton)
             {
 
-                if (alreadyConnectedError())
+                if (AlreadyConnectedError())
                     return;
 
                 DeviceAutoDetect.ReadySerialPortFound -= HandleReadySerialPortFound;
@@ -500,8 +500,6 @@ namespace Bojote.gTenxor
 
             // Convert to byte
             byte[] serialData = new byte[] { _0, _L, _1, _R, _Two, _Three };
-
-            SimHub.Logging.Current.Info("Sending command!");
 
             if (!Plugin.Settings.MaxTest && sender == Tmax)
             {

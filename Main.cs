@@ -26,20 +26,10 @@ namespace Bojote.gTenxor
 
         // Declared for gameData
         public static bool SerialOK = false;
-        private double rb4 = 0;
-        private double lb4 = 0;
 
-        // EMA (Exponential moving average)
-        double swayAvg = 0;
-        double decelAvg = 0;
-
-        // Declare variables for storing last known servo angles
-        byte lastLeftServoAngle = 0;
-        byte lastRightServoAngle = 0;
-        double leftServoDegrees = 0;
-        double rightServoDegrees = 0;
-
-        /* HERE IS THE ORIGINAL DATA */
+        // Low Pass Filter variables for servo operation
+        double prevDecel = 0;
+        double prevSway = 0;
 
         public MainSettings Settings;
 
@@ -67,7 +57,7 @@ namespace Bojote.gTenxor
         /// </summary>
         /// <param name="pluginManager"></param>
         /// <param name="data">Current game data, including current and previous data frame.</param>
-        public void XXXDataUpdate(PluginManager pluginManager, ref GameData data)
+        public void DataUpdate(PluginManager pluginManager, ref GameData data)
         {
             // Define the value of our property (declared in init)
             if (data.GameRunning)
@@ -79,129 +69,55 @@ namespace Bojote.gTenxor
                         // Tmax should never be a number over 180;
                         int tmax = Settings.Tmax;
 
-                        // Reverse the direcction of Surge or Sway if requested
-                        double decel = (data.NewData.AccelerationSurge ?? 0) * (Settings.DecelReversed ? -1 : 1);
-                        double sway = (data.NewData.AccelerationSway ?? 0) * (Settings.SwayReversed ? -1 : 1);
+                        // Reverse the direcction of Surge or Sway if requested (and apply a gain factor)
+                        double decel = Settings.DecelGain * (data.NewData.AccelerationSurge ?? 0) * (Settings.DecelReversed ? -1 : 1);
+                        double sway = Settings.YawGain * (data.NewData.AccelerationSway ?? 0) * (Settings.SwayReversed ? -1 : 1);
 
-                        /* ------------------------------------------------------------ */
+                        // Adjust the filter strength from 0 (no filtering) to 10 (heavy filtering)
+                        int filterStrength = Settings.Smooth;
+                        double alpha = 2.0 / (filterStrength + 1.0);
 
-                        double decelSquared = decel * decel;
-                        double swaySquared = sway * sway;
-                        double decelDoubled = decel * 2;
+                        // Apply the low-pass filter
+                        double decelFiltered = prevDecel + alpha * (decel - prevDecel);
+                        double swayFiltered = prevSway + alpha * (sway - prevSway);
+
+                        prevDecel = decelFiltered;
+                        prevSway = swayFiltered;
+
+                        // Calculating the hypotenuse of the surge and sway forces
+                        double decelSquared = decelFiltered * decelFiltered;
+                        double swaySquared = swayFiltered * swayFiltered;
+                        double decelDoubled = decelFiltered * 2;
 
                         // Compute l and r
                         double r = Math.Sqrt(decelSquared + swaySquared);
                         double l = decelDoubled - r;
 
-                        // Swap if necessary (be careful + or - values have an effect in which servo is being affected
-                        if (sway < 0)
+                        // Apply deadzone to the servo positions
+                        double deadzoneRange = Settings.Deadzone; // Adjust this value based on your desired deadzone range
+                        double deadzoneCenter = 0.0; // Adjust this value if you want the deadzone centered around a different position
+
+                        // Apply deadzone to the left servo position
+                        if (Math.Abs(l) <= deadzoneCenter + deadzoneRange / 2.0)
+                        {
+                            l = deadzoneCenter;
+                        }
+
+                        // Apply deadzone to the right servo position
+                        if (Math.Abs(r) <= deadzoneCenter + deadzoneRange / 2.0)
+                        {
+                            r = deadzoneCenter;
+                        }
+
+                        // Swap if necessary (be careful + or - values have an effect on which servo is being affected)
+                        if (swayFiltered < 0)
                         {
                             (r, l) = (l, r);
                         }
-
-                        /* ------------------------------------------------------------ */
 
                         // Clipping so that l and r are never > tmax or less than the numbers 2 or 3
                         l = Math.Max(Math.Min(l, tmax), 2);
                         r = Math.Max(Math.Min(r, tmax), 3);
-
-                        // Here we do all post proccesing...
-
-                        // For future use. Trigger an event if both l and r are at tmax
-                        if (l == tmax && r == tmax)
-                        {
-                            // this.TriggerEvent("MaxTension");
-                        }
-
-                        byte leftServoAngle = (byte)Math.Round(l);
-                        byte rightServoAngle = (byte)Math.Round(r);
-
-                        // Logging data just before it is sent
-                        string logEntry = ($" {leftServoAngle}, {rightServoAngle} ");
-                        File.AppendAllText("logs/Tenxor.txt", logEntry + Environment.NewLine);
-
-                        byte[] serialData = new byte[] { leftServoAngle, rightServoAngle };
-                        SerialConnection.SerialPort.Write(serialData, 0, 2);
-                    }
-                }
-            }
-        }
-
-        public void DataUpdate(PluginManager pluginManager, ref GameData data)
-        {
-            // Define the value of our property (declared in init)
-            if (data.GameRunning)
-            {
-                if (data.OldData != null && data.NewData != null)
-                {
-                    if (SerialOK)
-                    {
-                        // Tmax should never be a number over 180;
-                        int tmax = Math.Max(Math.Min(Settings.Tmax, 180), 0);
-
-                        // We can increase the sensitivity by changing the divisor. Set to 0 to skip
-                        double deadzoneSquared = (Settings.Deadzone / 100) * (Settings.Deadzone / 100);
-
-                        // Reverse if neccesary
-                        double decel = (data.NewData.AccelerationSurge ?? 0) * (Settings.DecelReversed ? -1 : 1);
-                        double sway = (data.NewData.AccelerationSway ?? 0) * (Settings.SwayReversed ? -1 : 1);
-
-                        // Apply gains
-                        sway *= Settings.YawGain;
-                        decel *= Settings.DecelGain;
-
-                        double decelSquared = decel * decel;
-                        double swaySquared = sway * sway;
-                        double decelDoubled = decel * 2;
-
-                        // Compute l and r
-                        double r = Math.Sqrt(decelSquared + swaySquared);
-                        double l = decelDoubled - r;
-
-                        // Swap if necessary (be careful + or - values have an effect in which servo is being affected
-                        if (sway < 0)
-                        {
-                            (r, l) = (l, r);
-                        }
-
-
-
-
-
-                        // Initial run: Set smoothed values to initial values
-                        if (this.lb4 == 0)
-                        {
-                            this.rb4 = r;
-                            this.lb4 = l;
-                        }
-                        else
-                        {
-                            // Apply smoothing
-                            double tc = 1 + Settings.Smooth;
-                            this.lb4 += ((l - this.lb4) / tc);
-                            this.rb4 += ((r - this.rb4) / tc);
-                        }
-
-                        // Apply deadzone
-                        if (deadzoneSquared > 0)
-                        {
-                            if ((l - this.lb4) * (l - this.lb4) <= deadzoneSquared)
-                            {
-                                this.lb4 = l;
-                            }
-
-                            if ((r - this.rb4) * (r - this.rb4) <= deadzoneSquared)
-                            {
-                                this.rb4 = r;
-                            }
-                        }
-
-
-
-
-                        // Clipping so that l and r are never > tmax or less than 2, 3
-                        l = Math.Max(Math.Min(this.lb4, tmax), 2);
-                        r = Math.Max(Math.Min(this.rb4, tmax), 3);
 
                         // For future use. Trigger an event if both l and r are at tmax
                         //if (l == tmax && r == tmax)
@@ -211,10 +127,6 @@ namespace Bojote.gTenxor
 
                         byte leftServoAngle = (byte)Math.Round(l);
                         byte rightServoAngle = (byte)Math.Round(r);
-
-                        // Logging data just before it is sent
-                        string logEntry = ($" {leftServoAngle}, {rightServoAngle} ");
-                        File.AppendAllText("logs/Tenxor.txt", logEntry + Environment.NewLine);
 
                         byte[] serialData = new byte[] { leftServoAngle, rightServoAngle };
                         SerialConnection.SerialPort.Write(serialData, 0, 2);
