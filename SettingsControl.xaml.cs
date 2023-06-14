@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FMOD;
+using System;
 using System.ComponentModel;
 using System.Management;
 using System.Threading;
@@ -226,7 +227,12 @@ namespace Bojote.gTenxor
             SimHub.Logging.Current.Info("BEGIN -> SettingsControl_Loaded");
             if (SerialConnection != null)
             {
-                SimHub.Logging.Current.Info("Setting page... " + SerialConnection);
+                if (SerialConnection.IsConnected) { 
+                    SimHub.Logging.Current.Info("Already connected!");
+                }
+                else { 
+                    AutoDetectDevice(Plugin.Settings); 
+                }
             }
             SimHub.Logging.Current.Info("END -> SettingsControl_Loaded");
         }
@@ -254,17 +260,19 @@ namespace Bojote.gTenxor
                 AutoDetectDevice(Plugin.Settings);
 
             }
-            else if (sender == ToggleButton)
+
+#if DEBUG
+            if (sender == ToggleButton)
             {
                 // This is just to send the string to change the device state
                 await ChangeDeviceState(Main.Constants.HandShakeSnd, portName);
             }
-            else if (sender == ToggleButton2)
+            if (sender == ToggleButton2)
             {
                 // This is just to send the string to change the device state
                 await ChangeDeviceState(Main.Constants.uniqueID, portName);
             }
-            else if (sender == Debugeador)
+            if (sender == Debugeador)
             {
                 // This is just to send the string to Query device state
                 await ChangeDeviceState(Main.Constants.QueryStatus, portName);
@@ -273,6 +281,8 @@ namespace Bojote.gTenxor
                 string _data = Main.PrintObjectProperties(Plugin.Settings);
                 OutputMsg(_data);
             }
+#endif
+
         }
 
         // The following are the actual events we just created above in settings control
@@ -307,7 +317,7 @@ namespace Bojote.gTenxor
                 if (currentSelection == "None")
                 {
                     ConnectCheckBox.IsChecked = false;
-                    string _data = "Seriously?? Trying to \"Connect to None\"? come on!!";
+                    string _data = "You need to select a port";
                     OutputMsg(_data);
                 }
                 else
@@ -322,7 +332,7 @@ namespace Bojote.gTenxor
                     {
                         Plugin.Settings.ConnectToSerialDevice = false;
                         ConnectCheckBox.IsChecked = false;
-                        string _data = "Could not connect to device, its probably in use by other program.\nRestart SimHub and try again";
+                        string _data = "Device already in use.\nRestart SimHub and try again";
                         OutputMsg(_data);
                     }
                 }
@@ -355,7 +365,7 @@ namespace Bojote.gTenxor
             {
                 if (ConnectCheckBox.IsChecked == false)
                 {
-                    string _data = "You need to be connected first!\n";
+                    string _data = "You need to be connected first!";
                     OutputMsg(_data);
                     MaxTest.IsChecked = false;
                     return;
@@ -514,8 +524,8 @@ namespace Bojote.gTenxor
                         }
                     }
                     else { 
-                        SimHub.Logging.Current.Info($"Did NOT run TryConnect(), and value for ConnectToDevice is {ConnectToDevice} and port is {selectedPort} and speed was {SelectedBaudRate}"); 
-                    }
+                        SimHub.Logging.Current.Info($"Did NOT run TryConnect(), and value for ConnectToDevice is {ConnectToDevice} and port is {selectedPort} and speed was {SelectedBaudRate}");
+                }
                 }
                 catch (UnauthorizedAccessException ex)
                 {
@@ -582,7 +592,7 @@ namespace Bojote.gTenxor
             if (SerialConnection.IsConnected)
             {
                 use_existing = true;
-                OutputMsg("Using existing connection to " + portName + "\n");
+                OutputMsg("Using existing connection to " + portName);
                 SimHub.Logging.Current.Info("Using existing connection to " + portName);
             }
             else
@@ -596,10 +606,10 @@ namespace Bojote.gTenxor
                         return;
 
 
-                    OutputMsg("Just opened a new connection to " + portName + "\n");
+                    OutputMsg("Just opened a new connection to " + portName);
                     SimHub.Logging.Current.Info("Just opened a new connection to " + portName);
                     SimHub.Logging.Current.Info("Waited for 2 seconds...");
-                    OutputMsg("Waited 2 seconds, lets send commands\n");
+                    OutputMsg("Waited 2 seconds, lets send commands");
                 }
                 catch (UnauthorizedAccessException ex)
                 {
@@ -629,7 +639,7 @@ namespace Bojote.gTenxor
                 command = new byte[] { 255 };
 
             SimHub.Logging.Current.Info($"Command {command[0]} sent with {identifier}!");
-            OutputMsg(($"Command {command[0]} sent with {identifier}!\n"));
+            OutputMsg(($"Command {command[0]} sent with {identifier}!"));
 
             // Send the action Command
             SerialConnection.SerialPort.Write(command, 0, 1);
@@ -661,9 +671,10 @@ namespace Bojote.gTenxor
                 {
                     string _data = "Found gTenxor on " + readySerialConnection.SerialPort.PortName;
                     // Perform necessary actions with the ready serial port
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
-                        OutputMsg(_data)
-                    );
+                    Application.Current.Dispatcher.Invoke(() => {
+                        OutputMsg(_data);
+                        SerialDevicesComboBox.SelectedItem = readySerialConnection.SerialPort.PortName;
+                    }); 
                 }
             }
             catch (Exception ex)
@@ -677,7 +688,7 @@ namespace Bojote.gTenxor
             }
 
             // If we successfully processed the port, disconnect and inform the user.
-            if (readySerialConnection.SerialPort != null)
+            if (readySerialConnection.SerialPort != null && SerialConnection.IsConnected)
             {
                 try
                 {
@@ -690,8 +701,6 @@ namespace Bojote.gTenxor
                     SimHub.Logging.Current.Error($"Error disconnecting port: {ex.Message}");
                 }
             }
-            // Remove this event handler only when you're sure you no longer need it.
-            // For instance, if you're stopping the auto-detection process.
         }
         public void OutputMsg(string data)
         {
@@ -723,7 +732,7 @@ namespace Bojote.gTenxor
             }
             catch (Exception ex)
             {
-                OutputMsg(ex.Message);
+                SimHub.Logging.Current.Error($"Process was terminated: {ex.Message}");
             }
             finally
             {

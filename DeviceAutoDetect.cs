@@ -18,7 +18,7 @@ namespace Bojote.gTenxor
         {
             int BaudRate = int.Parse(Settings.SelectedBaudRate);
 
-            int timeoutMilliseconds = 3000;  // 3 seconds timeout
+            int timeoutMilliseconds = 5000;  // 5 seconds timeout
             string[] actualPortNames = SerialPort.GetPortNames();
 
             var tasks = new List<Task>();
@@ -43,8 +43,6 @@ namespace Bojote.gTenxor
 
                             string SendString = Main.Constants.HandShakeSnd;
                             string HandShakeString = Main.Constants.HandShakeRcv;
-
-                            SC.SerialPort.WriteTimeout = 500;
 
                             byte[] command255 = { 255 };
                             SC.SerialPort.Write(command255, 0, 1);
