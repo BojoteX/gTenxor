@@ -1,7 +1,6 @@
 ﻿using GameReaderCommon;
 using SimHub.Plugins;
 using System;
-using System.IO;
 using System.Reflection;
 using System.Windows.Media;
 
