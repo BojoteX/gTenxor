@@ -5,18 +5,20 @@ using System.IO.Ports;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace Bojote.gTenxor
 {
     public class DeviceAutoDetect
     {
         public static event Action<SerialConnection> ReadySerialPortFound;
+        readonly SettingsControl settingsControl = new SettingsControl();
 
         public async Task CheckSerialPort(MainSettings Settings)
         {
             int BaudRate = int.Parse(Settings.SelectedBaudRate);
 
-            int timeoutMilliseconds = 2000;  // 2 seconds timeout
+            int timeoutMilliseconds = 3000;  // 3 seconds timeout
             string[] actualPortNames = SerialPort.GetPortNames();
 
             var tasks = new List<Task>();
@@ -25,84 +27,93 @@ namespace Bojote.gTenxor
             {
                 tasks.Add(Task.Run(async () =>
                 {
-                    SerialConnection SC = new SerialConnection();
-                    try
+                    using (SerialConnection SC = new SerialConnection())
                     {
-                        if (SC == null)
-                            return;
-
-                        await SC.Connect(portName, BaudRate, ResetCon: false);
-
-                        if (!SC.IsConnected)
-                            return;
-
-                        SimHub.Logging.Current.Info($"Opened {portName}");
-
-                        string SendString = Main.Constants.HandShakeSnd;
-                        string HandShakeString = Main.Constants.HandShakeRcv;
-
-                        SC.SerialPort.WriteTimeout = 500;
-
-                        byte[] command255 = { 255 };
-                        SC.SerialPort.Write(command255, 0, 1);
-                        SC.SerialPort.WriteLine(SendString);
-
-                        SimHub.Logging.Current.Info($"Sent the string {SendString} precedeed of the Byte 255");
-
-                        StringBuilder response = new StringBuilder();
-                        byte[] buffer = new byte[1024];
-                        int bytesRead;
-                        bool handshakeReceived = false;
-
-                        using (var cts = new CancellationTokenSource(timeoutMilliseconds))
+                        try
                         {
-                            try
+                            if (SC == null)
+                                return;
+
+                            await SC.Connect(portName, BaudRate, ResetCon: false);
+
+                            if (!SC.IsConnected)
+                                return;
+
+                            SimHub.Logging.Current.Info($"Opened {portName}");
+
+                            string SendString = Main.Constants.HandShakeSnd;
+                            string HandShakeString = Main.Constants.HandShakeRcv;
+
+                            SC.SerialPort.WriteTimeout = 500;
+
+                            byte[] command255 = { 255 };
+                            SC.SerialPort.Write(command255, 0, 1);
+                            SC.SerialPort.WriteLine(SendString);
+
+                            SimHub.Logging.Current.Info($"Sent the string {SendString} preceded by the Byte 255");
+
+                            StringBuilder response = new StringBuilder();
+                            byte[] buffer = new byte[1024];
+                            int bytesRead;
+                            bool handshakeReceived = false;
+
+                            using (var cts = new CancellationTokenSource(timeoutMilliseconds))
                             {
-                                while (!handshakeReceived)
+                                try
                                 {
-                                    if (SC.SerialPort.BytesToRead > 0)
+                                    while (!handshakeReceived)
                                     {
-                                        bytesRead = SC.SerialPort.Read(buffer, 0, buffer.Length);
-                                        response.Append(Encoding.ASCII.GetString(buffer, 0, bytesRead));
+                                        if (SC.SerialPort.BytesToRead > 0)
+                                        {
+                                            bytesRead = SC.SerialPort.Read(buffer, 0, buffer.Length);
+                                            response.Append(Encoding.ASCII.GetString(buffer, 0, bytesRead));
 
-                                        if (response.ToString().Contains(HandShakeString))
-                                            handshakeReceived = true;
+                                            if (response.ToString().Contains(HandShakeString))
+                                                handshakeReceived = true;
 
-                                        SimHub.Logging.Current.Info($"I'm reading data now");
+                                            SimHub.Logging.Current.Info($"I'm reading data now");
+                                        }
+
+                                        cts.Token.ThrowIfCancellationRequested();
                                     }
-
-                                    cts.Token.ThrowIfCancellationRequested();
+                                }
+                                catch (OperationCanceledException)
+                                {
+                                    // Cancellation request has been made, handle it
+                                    SimHub.Logging.Current.Info($"Operation on port {portName} was cancelled.");
                                 }
                             }
-                            catch (OperationCanceledException)
+
+                            if (handshakeReceived)
                             {
-                                // Cancellation request has been made, handle it
-                                SimHub.Logging.Current.Info($"Operation on port {portName} was cancelled.");
+                                ReadySerialPortFound?.Invoke(SC);
                             }
                         }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            SimHub.Logging.Current.Error($"Access to the port '{portName}' is denied. {ex.Message}");
+                            // Handle the exception here...
+                        }
+                        catch (IOException ex)
+                        {
+                            SimHub.Logging.Current.Error($"Error opening or writing to {portName}: {ex.Message}");
+                        }
 
-                        if (handshakeReceived)
+                        catch (InvalidOperationException ex)
                         {
-                            ReadySerialPortFound?.Invoke(SC);
+                            SimHub.Logging.Current.Error($"Error opening or writing to {portName}: {ex.Message}");
                         }
-                    }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        SimHub.Logging.Current.Error($"Access to the port '{portName}' is denied. {ex.Message}");
-                        // Handle the exception here...
-                    }
-                    catch (IOException ex)
-                    {
-                        SimHub.Logging.Current.Error($"Error opening or writing to {portName}: {ex.Message}");
-                        if (ex.HResult == -2146232800) // The specific HRESULT for Operation Aborted
+
+                        catch (ArgumentException ex)
                         {
-                            SimHub.Logging.Current.Info($"Operation aborted on port {portName} due to timeout.");
+                            SimHub.Logging.Current.Error($"Error opening or writing to {portName}: {ex.Message}");
                         }
-                    }
-                    finally
-                    {
-                        SC?.ForcedDisconnect();
-                        SimHub.Logging.Current.Info($"Closed {portName}");
+
+                        finally
+                        {
+                            SimHub.Logging.Current.Info($"Closed {portName}");
+                            await Application.Current.Dispatcher.InvokeAsync(() => settingsControl.OutputMsg($"Closed {portName}"));
+                        }
                     }
                 }));
             }

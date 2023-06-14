@@ -13,13 +13,14 @@ namespace Bojote.gTenxor
     /// </summary>
     public partial class SettingsControl : UserControl
     {
+        // Needed for internal stuff
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
+        private ManagementEventWatcher _watcher;
+
+        // Some custom variables 
+        public bool isReady = false; // Declare the shared variable
         public string prevDevicePermanent; // Declare the shared variable
         public bool prevDeviceStatePermanent; // Declare the shared variable
-        private ManagementEventWatcher _watcher;
-        public bool isReady = false; // Declare the shared variable
-
-        public DeviceAutoDetect DeviceAutoDetect { get; set; }
 
         public SerialConnection SerialConnection { get; set; }
 
@@ -241,104 +242,36 @@ namespace Bojote.gTenxor
             SimHub.Logging.Current.Info("END -> SettingsControl_UnLoaded");
         }
 
-        private bool AlreadyConnectedError()
-        {
-            bool isError = false;
-            if (ConnectCheckBox.IsChecked == true)
-            {
-                isError = true;
-                string _data = "A Device is already connected!\nDisconnect it, reset your device and try again\n";
-                DebugOutputTextBox.AppendText(_data);
-                DebugOutputTextBox.AppendText(Environment.NewLine); // Optional: Add a new line after each new data
-                DebugOutputTextBox.ScrollToEnd(); // Optional: Scroll to the end of the text box
-            }
-            return isError;
-        }
-
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
             string portName = Plugin.Settings.SelectedSerialDevice; 
 
             if (sender == AutodetectButton)
             {
-
                 if (AlreadyConnectedError())
                     return;
 
-                DeviceAutoDetect.ReadySerialPortFound -= HandleReadySerialPortFound;
-                DeviceAutoDetect.ReadySerialPortFound += HandleReadySerialPortFound;
+                AutoDetectDevice(Plugin.Settings);
 
-                // Check all ports syncronously and fast
-                DeviceAutoDetect autoDetect = new DeviceAutoDetect();
-
-                try
-                {
-                    AutodetectButton.IsEnabled = false;
-                    await autoDetect.CheckSerialPort(Plugin.Settings);
-                }
-                catch {
-                    // Log here
-                }
-                finally
-                {
-                    AutodetectButton.IsEnabled = true;
-                }
-                AutodetectButton.IsEnabled = true;
             }
             else if (sender == ToggleButton)
             {
                 // This is just to send the string to change the device state
-                ChangeDeviceState(Main.Constants.HandShakeSnd, portName);
+                await ChangeDeviceState(Main.Constants.HandShakeSnd, portName);
             }
             else if (sender == ToggleButton2)
             {
                 // This is just to send the string to change the device state
-                ChangeDeviceState(Main.Constants.uniqueID, portName);
+                await ChangeDeviceState(Main.Constants.uniqueID, portName);
             }
             else if (sender == Debugeador)
             {
                 // This is just to send the string to Query device state
-                ChangeDeviceState(Main.Constants.QueryStatus, portName);
-
-                Main.SerialOK = true;
+                await ChangeDeviceState(Main.Constants.QueryStatus, portName);
 
                 // This is just to send the string to change the device state
                 string _data = Main.PrintObjectProperties(Plugin.Settings);
-                DebugOutputTextBox.AppendText(_data);
-                DebugOutputTextBox.AppendText(Environment.NewLine); // Optional: Add a new line after each new data
-                DebugOutputTextBox.ScrollToEnd(); // Optional: Scroll to the end of the text box
-            }
-        }
-
-        private async void HandleReadySerialPortFound(SerialConnection readySerialConnection)
-        {
-            await semaphore.WaitAsync();
-            try
-            {
-                if (readySerialConnection.SerialPort != null)
-                {
-                    string _data = "Found device on " + readySerialConnection.SerialPort.PortName;
-                    // Perform necessary actions with the ready serial port
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            DebugOutputTextBox.AppendText(_data);
-                            DebugOutputTextBox.AppendText(Environment.NewLine); // Optional: Add a new line after each new data
-                            DebugOutputTextBox.ScrollToEnd(); // Optional: Scroll to the end of the text box
-                        })
-                    );
-                    await readySerialConnection.Disconnect();
-                    SimHub.Logging.Current.Info("Closed All ports");
-                }
-            }
-            catch (Exception ex)
-            {
-                SimHub.Logging.Current.Error($"Error handling ready port: {ex.Message}");
-            }
-            finally
-            {
-                DeviceAutoDetect.ReadySerialPortFound -= HandleReadySerialPortFound;
-                semaphore.Release();
+                OutputMsg(_data);
             }
         }
 
@@ -375,9 +308,7 @@ namespace Bojote.gTenxor
                 {
                     ConnectCheckBox.IsChecked = false;
                     string _data = "Seriously?? Trying to \"Connect to None\"? come on!!";
-                    DebugOutputTextBox.AppendText(_data);
-                    DebugOutputTextBox.AppendText(Environment.NewLine); // Optional: Add a new line after each new data
-                    DebugOutputTextBox.ScrollToEnd(); // Optional: Scroll to the end of the text box
+                    OutputMsg(_data);
                 }
                 else
                 {
@@ -392,9 +323,7 @@ namespace Bojote.gTenxor
                         Plugin.Settings.ConnectToSerialDevice = false;
                         ConnectCheckBox.IsChecked = false;
                         string _data = "Could not connect to device, its probably in use by other program.\nRestart SimHub and try again";
-                        DebugOutputTextBox.AppendText(_data);
-                        DebugOutputTextBox.AppendText(Environment.NewLine); // Optional: Add a new line after each new data
-                        DebugOutputTextBox.ScrollToEnd(); // Optional: Scroll to the end of the text box
+                        OutputMsg(_data);
                     }
                 }
             }
@@ -427,9 +356,7 @@ namespace Bojote.gTenxor
                 if (ConnectCheckBox.IsChecked == false)
                 {
                     string _data = "You need to be connected first!\n";
-                    DebugOutputTextBox.AppendText(_data);
-                    DebugOutputTextBox.AppendText(Environment.NewLine); // Optional: Add a new line after each new data
-                    DebugOutputTextBox.ScrollToEnd(); // Optional: Scroll to the end of the text box
+                    OutputMsg(_data);
                     MaxTest.IsChecked = false;
                     return;
                 }
@@ -634,7 +561,7 @@ namespace Bojote.gTenxor
             SerialConnection.SerialPort.Write(serialData, 0, serialData.Length);
         }
 
-        public async void ChangeDeviceState(string identifier, string portName)
+        public async Task ChangeDeviceState(string identifier, string portName)
         {
             int BaudRate = int.Parse(BaudRateComboBox.SelectedItem.ToString());
 
@@ -655,7 +582,7 @@ namespace Bojote.gTenxor
             if (SerialConnection.IsConnected)
             {
                 use_existing = true;
-                DebugOutputTextBox.Text = "Using existing connection to " + portName + "\n";
+                OutputMsg("Using existing connection to " + portName + "\n");
                 SimHub.Logging.Current.Info("Using existing connection to " + portName);
             }
             else
@@ -668,22 +595,26 @@ namespace Bojote.gTenxor
                     if (!SerialConnection.IsConnected)
                         return;
 
-                    DebugOutputTextBox.Text = "Just opened a new connection to " + portName + "\n";
+
+                    OutputMsg("Just opened a new connection to " + portName + "\n");
                     SimHub.Logging.Current.Info("Just opened a new connection to " + portName);
                     SimHub.Logging.Current.Info("Waited for 2 seconds...");
-                    DebugOutputTextBox.Text = "Waited 2 seconds, lets send commands\n";
+                    OutputMsg("Waited 2 seconds, lets send commands\n");
                 }
                 catch (UnauthorizedAccessException ex)
                 {
                     SimHub.Logging.Current.Error($"Access to the port '{portName}' is denied. " + ex.Message);
+                    OutputMsg($"Access to the port '{portName}' is denied. " + ex.Message);
                 }
                 catch (Exception)
                 {
                     SimHub.Logging.Current.Error($"Could not connect to {portName}");
+                    OutputMsg($"Could not connect to {portName}");
                 }
                 finally
                 {
-                    SimHub.Logging.Current.Error($"Something happened!");
+                    // SimHub.Logging.Current.Error($"Something happened!");
+                    // OutputMsg($"Something happened!");
                 }
             }
 
@@ -698,7 +629,7 @@ namespace Bojote.gTenxor
                 command = new byte[] { 255 };
 
             SimHub.Logging.Current.Info($"Command {command[0]} sent with {identifier}!");
-            DebugOutputTextBox.Text = ($"Command {command[0]} sent with {identifier}!\n");
+            OutputMsg(($"Command {command[0]} sent with {identifier}!\n"));
 
             // Send the action Command
             SerialConnection.SerialPort.Write(command, 0, 1);
@@ -719,14 +650,86 @@ namespace Bojote.gTenxor
                 // Set SerialOK 
                 Main.SerialOK = true;
             }
-
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                DebugOutputTextBox.AppendText(data);
-                DebugOutputTextBox.AppendText(Environment.NewLine); // Optional: Add a new line after each new data
-                DebugOutputTextBox.ScrollToEnd(); // Optional: Scroll to the end of the text box
-            });
+            Application.Current.Dispatcher.Invoke(() => { OutputMsg(data); });
         }
+        private async void HandleReadySerialPortFound(SerialConnection readySerialConnection)
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                if (readySerialConnection.SerialPort != null)
+                {
+                    string _data = "Found gTenxor on " + readySerialConnection.SerialPort.PortName;
+                    // Perform necessary actions with the ready serial port
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                        OutputMsg(_data)
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                SimHub.Logging.Current.Error($"Error handling ready port: {ex.Message}");
+            }
+            finally
+            {
+                // Always release the semaphore.
+                semaphore.Release();
+            }
 
+            // If we successfully processed the port, disconnect and inform the user.
+            if (readySerialConnection.SerialPort != null)
+            {
+                try
+                {
+                    await readySerialConnection.Disconnect();
+                    OutputMsg("Closed port " + readySerialConnection.SerialPort.PortName);
+                    SimHub.Logging.Current.Info("Closed port " + readySerialConnection.SerialPort.PortName);
+                }
+                catch (Exception ex)
+                {
+                    SimHub.Logging.Current.Error($"Error disconnecting port: {ex.Message}");
+                }
+            }
+            // Remove this event handler only when you're sure you no longer need it.
+            // For instance, if you're stopping the auto-detection process.
+        }
+        public void OutputMsg(string data)
+        {
+            DebugOutputTextBox.AppendText(data);
+            DebugOutputTextBox.AppendText(Environment.NewLine); // Optional: Add a new line after each new data
+            DebugOutputTextBox.ScrollToEnd(); // Optional: Scroll to the end of the text box
+        }
+        private bool AlreadyConnectedError()
+        {
+            bool isError = false;
+            if (ConnectCheckBox.IsChecked == true)
+            {
+                isError = true;
+                string _data = "A Device is already connected!\nDisconnect it, reset your device and try again\n";
+                OutputMsg(_data);
+            }
+            return isError;
+        }
+        public async void AutoDetectDevice(MainSettings Settings)
+        {
+            // Check all ports syncronously and fast
+            DeviceAutoDetect autoDetect = new DeviceAutoDetect();
+
+            try
+            {
+                AutodetectButton.IsEnabled = false;
+                DeviceAutoDetect.ReadySerialPortFound += HandleReadySerialPortFound;
+                await autoDetect.CheckSerialPort(Settings);
+            }
+            catch (Exception ex)
+            {
+                OutputMsg(ex.Message);
+            }
+            finally
+            {
+                AutodetectButton.IsEnabled = true;
+                DeviceAutoDetect.ReadySerialPortFound -= HandleReadySerialPortFound;
+            }
+        }
     }
 }

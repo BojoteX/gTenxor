@@ -49,6 +49,12 @@ namespace Bojote.gTenxor
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        ~SerialConnection()
+        {
+            Dispose(false);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -57,13 +63,14 @@ namespace Bojote.gTenxor
             {
                 if (disposing)
                 {
-                    if (SerialPort != null)
-                    {
-                        SerialPort.Close();
-                        SerialPort.Dispose();
-                        SerialPort = null;
-                    }
+                    // Dispose managed state (managed objects)
+                    SerialPort?.Close();
+                    SerialPort?.Dispose();
+                    semaphore.Dispose();
+                    // set large fields to null
+                    SerialPort = null;
                 }
+
                 disposed = true;
             }
         }
@@ -119,6 +126,8 @@ namespace Bojote.gTenxor
 
             SimHub.Logging.Current.Info($"Will attempt connection use as actualBaudrate {actualBaudRate} (I received {_SelectedBaudRate} as _SelectedBaudRate and {BaudRate} as BaudRate). Important for future troubleshooting");
 
+            // Overrride ResetCon
+            ResetCon = false;
             SerialPort = new SerialPort(portName, actualBaudRate)
             {
                 RtsEnable = ResetCon,
@@ -126,7 +135,11 @@ namespace Bojote.gTenxor
                 Parity = Parity.None,
                 DataBits = 8,
                 StopBits = StopBits.One,
-                Handshake = Handshake.None
+                Handshake = Handshake.None,
+                ReadTimeout = 5,
+                WriteTimeout = 5,
+                ReadBufferSize = 128, // 4096 is default
+                WriteBufferSize = 64 // 2048 is default
             };
 
             SerialPort.DataReceived -= SerialPort_DataReceived;
@@ -177,7 +190,7 @@ namespace Bojote.gTenxor
             {
                 if (SerialPort != null)
                 {
-                    // SerialPort.Dispose();
+                    SerialPort.Dispose();
                     SerialPort = null;
                     Main.SerialOK = false;
                 }
@@ -212,14 +225,6 @@ namespace Bojote.gTenxor
                     SerialPort = null;
                     Main.SerialOK = false;
                 }
-            }
-        }
-
-        public void SendCommand(string command)
-        {
-            if (IsConnected)
-            {
-                SerialPort.Write(command);
             }
         }
 

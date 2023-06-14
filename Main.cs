@@ -119,10 +119,10 @@ namespace Bojote.gTenxor
                         r = Math.Max(Math.Min(r, tmax), 3);
 
                         // For future use. Trigger an event if both l and r are at tmax
-                        //if (l == tmax && r == tmax)
-                        //{
-                            // this.TriggerEvent("MaxTension");
-                        //}
+                        if (l == tmax && r == tmax)
+                        {
+                            this.TriggerEvent("MaxTension");
+                        }
 
                         byte leftServoAngle = (byte)Math.Round(l);
                         byte rightServoAngle = (byte)Math.Round(r);
