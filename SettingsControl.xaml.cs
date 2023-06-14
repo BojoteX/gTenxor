@@ -258,10 +258,13 @@ namespace Bojote.gTenxor
                     return;
 
                 AutoDetectDevice(Plugin.Settings);
-
+                await Task.Delay(1);
             }
 
 #if DEBUG
+            // Code to include only in debug configuration
+            SimHub.Logging.Current.Info("Debug mode is enabled.");
+
             if (sender == ToggleButton)
             {
                 // This is just to send the string to change the device state
@@ -282,12 +285,11 @@ namespace Bojote.gTenxor
                 OutputMsg(_data);
             }
 #endif
-
         }
 
-        // The following are the actual events we just created above in settings control
-        // Event handler for SerialDevicesComboBox selection change
-        private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+            // The following are the actual events we just created above in settings control
+            // Event handler for SerialDevicesComboBox selection change
+            private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (sender == SerialDevicesComboBox)
             {
