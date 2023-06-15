@@ -146,12 +146,6 @@ namespace Bojote.gTenxor
             // Save settings
             this.SaveCommonSettings("gTenxorGeneral", Settings);
 
-            // Will kill any open connections (if any)
-            SerialConnection?.ForcedDisconnect();
-
-            SimHub.Logging.Current.Info("Closing gTenxor Plugin Serial connection");
-            // Thread.Sleep(1500);
-
             SimHub.Logging.Current.Info("END -> End");
         }
 
@@ -228,14 +222,14 @@ namespace Bojote.gTenxor
             {
                 SelectedSerialDevice = "None",
                 ConnectToSerialDevice = false,
-                SelectedBaudRate = "9600",
+                SelectedBaudRate = "115200",
                 Deadzone = 5,
                 LeftOffset = 15,
                 RightOffset = 15,
-                Tmax = 126,
-                DecelGain = 50,
-                YawGain = 50,
-                Smooth = 6,
+                Tmax = 180,
+                DecelGain = 5,
+                YawGain = 5,
+                Smooth = 10,
                 MaxTest = false,
                 SwayReversed = false,
                 DecelReversed = false

@@ -103,7 +103,7 @@ namespace Bojote.gTenxor
             }
         }
 
-        public async Task<SerialConnection> Connect(string portName, int BaudRate, bool ResetCon = false)
+        public async Task<SerialConnection> Connect(string portName, int BaudRate = 115200, bool ResetCon = false)
         {
             if (IsConnected)
             {
@@ -138,7 +138,7 @@ namespace Bojote.gTenxor
                 Handshake = Handshake.None,
                 ReadTimeout = 5,
                 WriteTimeout = 5,
-                ReadBufferSize = 128, // 4096 is default
+                ReadBufferSize = 64, // 4096 is default
                 WriteBufferSize = 64 // 2048 is default
             };
 

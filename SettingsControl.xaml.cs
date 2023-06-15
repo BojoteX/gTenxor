@@ -1,5 +1,4 @@
-﻿using FMOD;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Management;
 using System.Threading;
@@ -242,8 +241,8 @@ namespace Bojote.gTenxor
             if (SerialConnection != null)
             {
                 // Plugin.Settings.ConnectToSerialDevice = false;
-                // await SerialConnection.Disconnect(withoutDelay: true);
-                // SimHub.Logging.Current.Info("Changed game, disconnecting serial!");
+                SerialConnection.ForcedDisconnect();
+                SimHub.Logging.Current.Info("Changed game, disconnecting serial!");
             }
             SimHub.Logging.Current.Info("END -> SettingsControl_UnLoaded");
         }
