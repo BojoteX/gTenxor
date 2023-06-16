@@ -63,7 +63,7 @@ namespace Bojote.gTenxor
             {
                 if (data.OldData != null && data.NewData != null)
                 {
-                    if (SerialOK)
+                    if (SerialOK && SerialConnection.IsConnected)
                     {
                         // Tmax should never be a number over 180;
                         int tmax = Settings.Tmax;
