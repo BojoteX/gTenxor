@@ -238,12 +238,7 @@ namespace Bojote.gTenxor
         private void SettingsControl_Unloaded(object sender, RoutedEventArgs e)
         {
             SimHub.Logging.Current.Info("BEGIN -> SettingsControl_UnLoaded");
-            if (SerialConnection != null)
-            {
-                // Plugin.Settings.ConnectToSerialDevice = false;
-                SerialConnection.ForcedDisconnect();
-                SimHub.Logging.Current.Info("Changed game, disconnecting serial!");
-            }
+
             SimHub.Logging.Current.Info("END -> SettingsControl_UnLoaded");
         }
 
