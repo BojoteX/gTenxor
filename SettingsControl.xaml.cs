@@ -495,7 +495,7 @@ namespace Bojote.gTenxor
                         else
                         {
                         // Now connect to the new port
-                            await SerialConnection.Connect(selectedPort, SelectedBaudRate, ResetCon: false);
+                            await SerialConnection.Connect(selectedPort, SelectedBaudRate, ResetCon: true);
                             SimHub.Logging.Current.Info("Will try to connect to: " + selectedPort);
                             if(SerialConnection.IsConnected) {
                                 SimHub.Logging.Current.Info("And it was a success (Created a new connection)");
@@ -595,7 +595,7 @@ namespace Bojote.gTenxor
                 use_existing = false;
                 try
                 {
-                    await SerialConnection.Connect(portName, BaudRate, ResetCon: false);
+                    await SerialConnection.Connect(portName, BaudRate, ResetCon: true);
 
                     if (!SerialConnection.IsConnected)
                         return;

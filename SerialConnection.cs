@@ -103,7 +103,7 @@ namespace Bojote.gTenxor
             }
         }
 
-        public async Task<SerialConnection> Connect(string portName, int BaudRate = 115200, bool ResetCon = false)
+        public async Task<SerialConnection> Connect(string portName, int BaudRate = 115200, bool ResetCon = true)
         {
             if (IsConnected)
             {
@@ -126,8 +126,6 @@ namespace Bojote.gTenxor
 
             SimHub.Logging.Current.Info($"Will attempt connection use as actualBaudrate {actualBaudRate} (I received {_SelectedBaudRate} as _SelectedBaudRate and {BaudRate} as BaudRate). Important for future troubleshooting");
 
-            // Overrride ResetCon
-            ResetCon = false;
             SerialPort = new SerialPort(portName, actualBaudRate)
             {
                 RtsEnable = ResetCon,
