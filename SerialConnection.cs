@@ -77,7 +77,7 @@ namespace Bojote.gTenxor
 
         public void LoadSerialDevices()
         {
-            Thread.Sleep(1000);
+            Thread.Sleep(2000);
             string[] portNames = SerialPort.GetPortNames();
             foreach (string port in portNames)
             {
@@ -127,6 +127,8 @@ namespace Bojote.gTenxor
 
             SimHub.Logging.Current.Info($"Will attempt connection use as actualBaudrate {actualBaudRate} (I received {_SelectedBaudRate} as _SelectedBaudRate and {BaudRate} as BaudRate). Important for future troubleshooting");
 
+            // Force to false
+            ResetCon = false;
             SerialPort = new SerialPort(portName, actualBaudRate)
             {
                 RtsEnable = ResetCon,
