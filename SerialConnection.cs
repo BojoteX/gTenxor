@@ -77,6 +77,7 @@ namespace Bojote.gTenxor
 
         public void LoadSerialDevices()
         {
+            Thread.Sleep(1000);
             string[] portNames = SerialPort.GetPortNames();
             foreach (string port in portNames)
             {

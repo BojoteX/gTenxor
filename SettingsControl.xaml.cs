@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Management;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,11 +17,11 @@ namespace Bojote.gTenxor
         // Needed for internal stuff
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
         private ManagementEventWatcher _watcher;
+        private string prevDevicePermanent; // Declare the shared variable
+        private bool prevDeviceStatePermanent; // Declare the shared variable
 
         // Some custom variables 
         public bool isReady = false; // Declare the shared variable
-        public string prevDevicePermanent; // Declare the shared variable
-        public bool prevDeviceStatePermanent; // Declare the shared variable
 
         public SerialConnection SerialConnection { get; set; }
 
@@ -109,7 +110,7 @@ namespace Bojote.gTenxor
 
         void USBChangedEvent(object sender, EventArrivedEventArgs e)
         {
-            SimHub.Logging.Current.Info("BEGIN -> USBChanged");
+            SimHub.Logging.Current.Info($"BEGIN -> USBChanged for {Main.PluginName} from {sender}");
 
             string eventType = e.NewEvent.ClassPath.ClassName;
             ManagementBaseObject targetInstance = (ManagementBaseObject)e.NewEvent["TargetInstance"];
@@ -117,21 +118,36 @@ namespace Bojote.gTenxor
             switch (eventType)
             {
                 case "__InstanceDeletionEvent":
-
-                    // Dispose of the SerialConnection object if it exists
-                    Plugin.SerialConnection?.Disconnect(withoutDelay: true);
-
-                    // Now load the devices
-                    Dispatcher.Invoke(() =>
+                    Dispatcher.Invoke(async () =>
                     {
-                        SerialConnection.LoadSerialDevices();
-                        bool SelectedDev = SerialDevicesComboBox.SelectedItem is string selectedDevice;
-                        if (SelectedDev)
+                        var oldDevices = SerialConnection.SerialDevices.ToList(); // Create a copy of the old device list
+
+                        string prevSelection = SerialDevicesComboBox.SelectedItem as string;
+                        for (int i = 0; i < 5; i++) // Attempt to update the list 5 times
                         {
-                            // Do Nothing!
+                            SimHub.Logging.Current.Info($"Wait for devices to disappear. Previous selection was {prevSelection} for {Main.PluginName} (also have {prevDevicePermanent})");
+
+                            Plugin.SerialConnection.LoadSerialDevices();
+                            var newDevices = SerialConnection.SerialDevices;
+
+                            if (!oldDevices.SequenceEqual(newDevices))
+                            {
+                                // The device lists are different, we can stop retrying
+                                break;
+                            }
+                            else
+                            {
+                                // Wait for a while before the next try
+                                await Task.Delay(1000); // Delay for one second
+                            }
                         }
-                        else
+
+                        string currentSelection = SerialDevicesComboBox.SelectedItem as string;
+                        if (currentSelection != prevSelection)
                         {
+                            // Dispose of the SerialConnection object if it exists
+                            Plugin.SerialConnection?.Disconnect(withoutDelay: true);
+                            SimHub.Logging.Current.Info($"InstanceDeletionEvent: Here is where we disconnect {Main.PluginName} as it disappeared from my list while being the selected option");
                             Plugin.Settings.SelectedSerialDevice = "None";
                             SerialDevicesComboBox.SelectedItem = "None";
                         }
@@ -139,9 +155,6 @@ namespace Bojote.gTenxor
                     });
                     break;
                 case "__InstanceCreationEvent":
-
-                    // Dispose of the SerialConnection object if it exists
-                    Plugin.SerialConnection?.Disconnect(withoutDelay: true);
 
                     bool isChecked;
                     // Now load the devices
@@ -164,6 +177,9 @@ namespace Bojote.gTenxor
                         }
                         else
                         {
+                            // Dispose of the SerialConnection object if it exists
+                            // Plugin.SerialConnection?.Disconnect(withoutDelay: true);
+                            SimHub.Logging.Current.Info($"InstanceCreationEvent: Here is where we disconnect {Main.PluginName}");
                             Plugin.Settings.SelectedSerialDevice = "None";
                             SerialDevicesComboBox.SelectedItem = "None";
                         }
@@ -176,7 +192,7 @@ namespace Bojote.gTenxor
 
         private void SerialConnection_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            SimHub.Logging.Current.Info("BEGIN -> SerialConnection_PropertyChanged");
+            SimHub.Logging.Current.Info($"BEGIN -> PropertyChanged for {Main.PluginName} from {sender}");
 
             if (e.PropertyName == nameof(SerialConnection.SerialDevices))
             {

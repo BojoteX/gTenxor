@@ -21,6 +21,8 @@ namespace Bojote.gTenxor
             public const string QueryStatus         = "KNOCK-KNOCK";
         }
 
+        public static string PluginName { get; private set; }
+        
         public SerialConnection SerialConnection { get; set; }
 
         // Declared for gameData
@@ -218,6 +220,9 @@ namespace Bojote.gTenxor
                 Settings.Tmax--;
             });
 
+            // Set the name to use 
+            PluginName = GetPluginName();
+
             SimHub.Logging.Current.Info("END -> Init");
         }
 
@@ -257,6 +262,17 @@ namespace Bojote.gTenxor
             }
             return _value;
         }
+        public static string GetPluginName()
+        {
+            Type mainType = typeof(Main);
+            PluginNameAttribute pluginNameAttribute = mainType.GetCustomAttribute<PluginNameAttribute>();
 
+            if (pluginNameAttribute != null)
+            {
+                return pluginNameAttribute.name;
+            }
+
+            return string.Empty;
+        }
     }
 }
