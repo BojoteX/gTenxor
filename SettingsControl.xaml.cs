@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Management;
 using System.Threading;
 using System.Threading.Tasks;
@@ -117,8 +118,9 @@ namespace Bojote.gTenxor
             switch (eventType)
             {
                 case "__InstanceDeletionEvent":
-                    Dispatcher.Invoke(() =>
+                    Dispatcher.Invoke(async () =>
                     {
+                        var oldDevices = SerialConnection.SerialDevices.ToList(); // Create a copy of the old device list
                         string prevSelection = SerialDevicesComboBox.SelectedItem as string;
 
                         if (ConnectCheckBox.IsChecked == true)
@@ -126,32 +128,76 @@ namespace Bojote.gTenxor
                         else
                             prevDeviceStatePermanent = false;
 
-                        SimHub.Logging.Current.Info($"Wait for devices to disappear. Previous selection was {prevSelection} for {Main.PluginName} (also have {prevDevicePermanent}) and auto connect is {prevDeviceStatePermanent}");
+                        if (prevDevicePermanent == null)
+                            prevDevicePermanent = prevSelection;
 
-                        Plugin.SerialConnection.LoadSerialDevices();
+                        for (int i = 1; i < 6; i++) // Attempt to update the list 5 times
+                        {
+                            Plugin.SerialConnection.LoadSerialDevices();
+                            var newDevices = SerialConnection.SerialDevices;
+
+                            if (!oldDevices.SequenceEqual(newDevices))
+                            {
+                                SimHub.Logging.Current.Info($"All good! no need to iterate more as a USB change was indeed detected and updated in our list of devices");
+                                // The device lists are different, we can stop retrying
+                                break;
+                            }
+                            else
+                            {
+                                // Interrupt all serial comunication when about to disconnect
+                                Main.SerialOK = false;
+                                await Task.Delay(100); // Delay to allow for the above variable to update
+
+                                Plugin.SerialConnection.ForcedDisconnect();
+                                // Wait for a while before the next try
+                                await Task.Delay(1000); // Delay for one second
+                                GC.Collect();
+                                GC.WaitForPendingFinalizers();
+                                SimHub.Logging.Current.Info($"Serial devices list was not refreshed for {Main.PluginName}, will try again... Attempt Number {i}, let me also force a Disconnect");
+
+                                if (i == 5) // I tried 5 times...
+                                {
+                                    SimHub.Logging.Current.Info($"Find some extreme methods for {Main.PluginName} as nothing works!");
+                                    Plugin.SerialConnection.LoadSerialDevices();
+                                }
+                            }
+                        }
+
+                        SimHub.Logging.Current.Info($"Previous selection was {prevSelection} for {Main.PluginName} (also have {prevDevicePermanent}) and auto connect is {prevDeviceStatePermanent}");
+
                         SerialDevicesComboBox.ItemsSource = SerialConnection.SerialDevices;
-
                         string currentSelection = SerialDevicesComboBox.SelectedItem as string;
+
                         if (currentSelection != prevSelection)
                         {
                             SimHub.Logging.Current.Info($"InstanceDeletionEvent: Here is where we disconnect {Main.PluginName} as it disappeared from my list while being the selected option");
                             Plugin.Settings.SelectedSerialDevice = "None";
                             SerialDevicesComboBox.SelectedItem = "None";
+                            ConnectCheckBox.IsChecked = false;
+                        }
+                        else
+                        {
+                            SimHub.Logging.Current.Info($"Do we have to re-sconnect {Main.PluginName}?");
+                            ConnectCheckBox.IsChecked = false;
+                            ConnectCheckBox.IsChecked = true;
+                            await Task.Delay(100); // Delay to allow for the above variable to update
+                            Main.SerialOK = true;
                         }
                         SimHub.Logging.Current.Info($"DISCONNECT: The last connected device was {prevDevicePermanent} and Connect Checkbox was set to {prevDeviceStatePermanent}");
                     });
                     break;
                 case "__InstanceCreationEvent":
-
-                    bool isChecked;
-                    // Now load the devices
-                    if (prevDeviceStatePermanent == true)
-                        isChecked = true;
-                    else
-                        isChecked = false;
-
                     Dispatcher.Invoke(() =>
                     {
+                        bool isChecked;
+                        // Now load the devices
+                        if (prevDeviceStatePermanent == true)
+                            isChecked = true;
+                        else
+                            isChecked = false;
+
+                        SimHub.Logging.Current.Info($"InstanceCreationEvent: Here is where we re-connect {Main.PluginName}");
+
                         SerialConnection.LoadSerialDevices();
                         SerialDevicesComboBox.ItemsSource = SerialConnection.SerialDevices;
 
@@ -206,7 +252,8 @@ namespace Bojote.gTenxor
                 {
                     Plugin.Settings.SelectedSerialDevice = "None";
                     SerialDevicesComboBox.SelectedItem = "None";
-                    if (prevDevice != null && prevDevice != "None") {
+                    if (prevDevice != null && prevDevice != "None")
+                    {
                         // Set PrevDevice as a shared value so that you can later attempt a reconnect to the same COM port
                         prevDevicePermanent = prevDevice;
                     }
@@ -217,9 +264,9 @@ namespace Bojote.gTenxor
             {
                 if (BaudRateComboBox.SelectedItem is string _selectedBaudRate)
                 {
-                        Plugin.Settings.SelectedBaudRate = _selectedBaudRate;
-                        SimHub.Logging.Current.Info($"Updated Plugin.Settings.SelectedBaudRate with {_selectedBaudRate}");
-                        SerialConnection.SelectedBaudRate = Plugin.Settings.SelectedBaudRate;
+                    Plugin.Settings.SelectedBaudRate = _selectedBaudRate;
+                    SimHub.Logging.Current.Info($"Updated Plugin.Settings.SelectedBaudRate with {_selectedBaudRate}");
+                    SerialConnection.SelectedBaudRate = Plugin.Settings.SelectedBaudRate;
                 }
             }
             SimHub.Logging.Current.Info("END -> SerialConnection_PropertyChanged");
