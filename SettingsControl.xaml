@@ -215,7 +215,7 @@
 
                 <StackPanel Margin="0,0,0,0" Grid.ColumnSpan="3" Grid.Row="1" Grid.Column="0">
                     <StackPanel Margin="0,0,0,0">
-                        <ui:ControlsEditor FriendlyName="Toggle Live Belt" ActionName="Main.ToggleLiveBelt"></ui:ControlsEditor>
+                    <ui:ControlsEditor FriendlyName="Toggle Live Belt" ActionName="GTenxor.ToggleLiveBelt"></ui:ControlsEditor>
                     </StackPanel>
                 </StackPanel>
             

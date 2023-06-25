@@ -41,8 +41,8 @@ namespace Bojote.gTenxor
 
                             SimHub.Logging.Current.Info($"Opened {portName}");
 
-                            string SendString = Main.Constants.HandShakeSnd;
-                            string HandShakeString = Main.Constants.HandShakeRcv;
+                            string SendString = GTenxor.Constants.HandShakeSnd;
+                            string HandShakeString = GTenxor.Constants.HandShakeRcv;
 
                             byte[] command255 = { 255 };
                             SC.SerialPort.Write(command255, 0, 1);

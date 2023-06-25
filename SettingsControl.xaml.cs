@@ -19,13 +19,14 @@ namespace Bojote.gTenxor
         private ManagementEventWatcher _watcher;
         private string prevDevicePermanent; // Declare the shared variable
         private bool prevDeviceStatePermanent; // Declare the shared variable
+        private bool watcherStarted = false;
 
         // Some custom variables 
         public bool isReady = false; // Declare the shared variable
 
         public SerialConnection SerialConnection { get; set; }
 
-        public Main Plugin { get; }
+        public GTenxor Plugin { get; }
 
         public SettingsControl()
         {
@@ -37,7 +38,7 @@ namespace Bojote.gTenxor
             SimHub.Logging.Current.Info("END -> SettingsControl1");
         }
 
-        public SettingsControl(Main plugin) : this()
+        public SettingsControl(GTenxor plugin) : this()
         {
             SimHub.Logging.Current.Info("BEGIN -> SettingsControl2");
 
@@ -48,7 +49,7 @@ namespace Bojote.gTenxor
             if (Plugin.SerialConnection != null)
                 SerialConnection = Plugin.SerialConnection;
 
-            // Initialize SerialConnection for Main (if none was set)
+            // Initialize SerialConnection for gTenxor (if none was set)
             if (Plugin.SerialConnection == null && SerialConnection != null)
                 Plugin.SerialConnection = SerialConnection;
 
@@ -69,23 +70,25 @@ namespace Bojote.gTenxor
             // Bind the device speeds to the ComboBox
             BaudRateComboBox.ItemsSource = SerialConnection.BaudRates;
 
-            // This one is for cases where I need to do something specifically in the settings page
-            // Here we REMOVED the event from our XAML file to have a little more control This only for the connect checkbox and ComboBox
-            // Here we monitor changes to the devices in the ComboBox using WatchForUSBChanges() and invoking SerialConnection.LoadSerialDevices()
+            // Need to Load some of my events
+            Loaded -= SettingsControl_Loaded;
+            Loaded += SettingsControl_Loaded;
 
-            // Need to monitor certain things
-            this.Loaded += SettingsControl_Loaded;
-            this.Unloaded += SettingsControl_Unloaded;
+            // And we also need to be able to unload them
+            Unloaded -= SettingsControl_Unloaded;
+            Unloaded += SettingsControl_Unloaded;
 
-            // Load Events from SerialConnection class
-            SerialConnection.PropertyChanged += SerialConnection_PropertyChanged;
-            SerialDevicesComboBox.SelectionChanged += ComboBox_SelectionChanged;
-            BaudRateComboBox.SelectionChanged += ComboBox_SelectionChanged;
+            // We need to make sure there is only one event always active
+            SerialConnection.OnDataReceived -= HandleDataReceived;
             SerialConnection.OnDataReceived += HandleDataReceived;
 
-            // Load events from SettingsControl class
-            ConnectCheckBox.Checked += Connect_Checked;
-            ConnectCheckBox.Unchecked += Connect_Unchecked;
+            // Load Events from SerialConnection class
+            SerialConnection.PropertyChanged -= SerialConnection_PropertyChanged;
+            SerialConnection.PropertyChanged += SerialConnection_PropertyChanged;
+
+            // Load Events from for combo box changes
+            SerialDevicesComboBox.SelectionChanged -= ComboBox_SelectionChanged;
+            SerialDevicesComboBox.SelectionChanged += ComboBox_SelectionChanged;
 
             // Connect automatically if setting is active
             Task.Run(() => TryConnect(null,0));
@@ -100,17 +103,21 @@ namespace Bojote.gTenxor
 
         public void WatchForUSBChanges()
         {
-            string sqlQuery = "SELECT * FROM __InstanceOperationEvent WITHIN 2 WHERE TargetInstance ISA 'Win32_PnPEntity' AND TargetInstance.PNPClass = 'Ports'";
+            if (!watcherStarted) {
+                string sqlQuery = "SELECT * FROM __InstanceOperationEvent WITHIN 2 WHERE TargetInstance ISA 'Win32_PnPEntity' AND TargetInstance.PNPClass = 'Ports'";
 
-            _watcher = new ManagementEventWatcher();
-            _watcher.EventArrived += new EventArrivedEventHandler(USBChangedEvent);
-            _watcher.Query = new WqlEventQuery(sqlQuery);
-            _watcher.Start();
+                _watcher = new ManagementEventWatcher();
+                _watcher.EventArrived += new EventArrivedEventHandler(USBChangedEvent);
+                _watcher.Query = new WqlEventQuery(sqlQuery);
+                _watcher.Start();
+
+                watcherStarted = true;
+            }
         }
 
         void USBChangedEvent(object sender, EventArrivedEventArgs e)
         {
-            SimHub.Logging.Current.Info($"BEGIN -> USBChanged for {Main.PluginName} from {sender}");
+            SimHub.Logging.Current.Info($"BEGIN -> USBChanged for {GTenxor.PluginName} from {sender}");
 
             string eventType = e.NewEvent.ClassPath.ClassName;
             ManagementBaseObject targetInstance = (ManagementBaseObject)e.NewEvent["TargetInstance"];
@@ -148,7 +155,7 @@ namespace Bojote.gTenxor
                             else
                             {
                                 // Interrupt all serial comunication when about to disconnect
-                                Main.SerialOK = false;
+                                GTenxor.SerialOK = false;
                                 await Task.Delay(500); // Delay to allow for the above variable to update
 
                                 Plugin.SerialConnection.ForcedDisconnect();
@@ -157,36 +164,36 @@ namespace Bojote.gTenxor
                                 GC.Collect();
                                 GC.WaitForPendingFinalizers();
                                 await Task.Delay(500); // Delay to allow for garbage collector to do its thing
-                                SimHub.Logging.Current.Info($"Serial devices list was not refreshed for {Main.PluginName}, will try again... Attempt Number {i}, let me also force a Disconnect");
+                                SimHub.Logging.Current.Info($"Serial devices list was not refreshed for {GTenxor.PluginName}, will try again... Attempt Number {i}, let me also force a Disconnect");
 
                                 if (i == 5) // I tried 5 times...
                                 {
-                                    SimHub.Logging.Current.Info($"Find some extreme methods for {Main.PluginName} as nothing works!");
+                                    SimHub.Logging.Current.Info($"Find some extreme methods for {GTenxor.PluginName} as nothing works!");
                                     Plugin.SerialConnection.LoadSerialDevices();
                                 }
                             }
                         }
 
-                        SimHub.Logging.Current.Info($"Previous selection was {prevSelection} for {Main.PluginName} (also have {prevDevicePermanent}) and auto connect is {prevDeviceStatePermanent}");
+                        SimHub.Logging.Current.Info($"Previous selection was {prevSelection} for {GTenxor.PluginName} (also have {prevDevicePermanent}) and auto connect is {prevDeviceStatePermanent}");
 
                         SerialDevicesComboBox.ItemsSource = SerialConnection.SerialDevices;
                         string currentSelection = SerialDevicesComboBox.SelectedItem as string;
 
                         if (currentSelection != prevSelection)
                         {
-                            SimHub.Logging.Current.Info($"InstanceDeletionEvent: Here is where we disconnect {Main.PluginName} as it disappeared from my list while being the selected option");
+                            SimHub.Logging.Current.Info($"InstanceDeletionEvent: Here is where we disconnect {GTenxor.PluginName} as it disappeared from my list while being the selected option");
                             Plugin.Settings.SelectedSerialDevice = "None";
                             SerialDevicesComboBox.SelectedItem = "None";
                             ConnectCheckBox.IsChecked = false;
                         }
                         else
                         {
-                            SimHub.Logging.Current.Info($"Do we have to re-sconnect {Main.PluginName}?");
+                            SimHub.Logging.Current.Info($"Do we have to re-sconnect {GTenxor.PluginName}?");
                             ConnectCheckBox.IsChecked = false;
                             await Task.Delay(500); // Delay to allow for the above variable to update
                             ConnectCheckBox.IsChecked = true;
                             await Task.Delay(500); // Delay to allow for the above variable to update
-                            Main.SerialOK = true;
+                            GTenxor.SerialOK = true;
                         }
                         SimHub.Logging.Current.Info($"DISCONNECT: The last connected device was {prevDevicePermanent} and Connect Checkbox was set to {prevDeviceStatePermanent}");
                     });
@@ -201,7 +208,7 @@ namespace Bojote.gTenxor
                         else
                             isChecked = false;
 
-                        SimHub.Logging.Current.Info($"InstanceCreationEvent: Here is where we re-connect {Main.PluginName}");
+                        SimHub.Logging.Current.Info($"InstanceCreationEvent: Here is where we re-connect {GTenxor.PluginName}");
 
                         // Allow time after re-connection to refresh the list
                         await Task.Delay(500);
@@ -221,7 +228,7 @@ namespace Bojote.gTenxor
                         }
                         else
                         {
-                            SimHub.Logging.Current.Info($"InstanceCreationEvent: Here is where we disconnect {Main.PluginName}");
+                            SimHub.Logging.Current.Info($"InstanceCreationEvent: Here is where we disconnect {GTenxor.PluginName}");
                             Plugin.Settings.SelectedSerialDevice = "None";
                             SerialDevicesComboBox.SelectedItem = "None";
                         }
@@ -234,7 +241,7 @@ namespace Bojote.gTenxor
 
         private void SerialConnection_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            SimHub.Logging.Current.Info($"BEGIN -> PropertyChanged for {Main.PluginName} from {sender}");
+            SimHub.Logging.Current.Info($"BEGIN -> PropertyChanged for {GTenxor.PluginName} from {sender}");
 
             if (e.PropertyName == nameof(SerialConnection.SerialDevices))
             {
@@ -282,6 +289,11 @@ namespace Bojote.gTenxor
 
         private void SettingsControl_Loaded(object sender, RoutedEventArgs e)
         {
+            // Load events from SettingsControl class
+            ConnectCheckBox.Checked += Connect_Checked;
+            ConnectCheckBox.Unchecked += Connect_Unchecked;
+            BaudRateComboBox.SelectionChanged += ComboBox_SelectionChanged;
+
             SimHub.Logging.Current.Info("BEGIN -> SettingsControl_Loaded");
             if (SerialConnection != null)
             {
@@ -297,6 +309,11 @@ namespace Bojote.gTenxor
         private void SettingsControl_Unloaded(object sender, RoutedEventArgs e)
         {
             SimHub.Logging.Current.Info("BEGIN -> SettingsControl_UnLoaded");
+
+            // UnLoad events from SettingsControl class
+            ConnectCheckBox.Checked -= Connect_Checked;
+            ConnectCheckBox.Unchecked -= Connect_Unchecked;
+            BaudRateComboBox.SelectionChanged -= ComboBox_SelectionChanged;
 
             SimHub.Logging.Current.Info("END -> SettingsControl_UnLoaded");
         }
@@ -319,20 +336,20 @@ namespace Bojote.gTenxor
             else if (sender == ToggleButton)
             {
                 // This is just to send the string to change the device state
-                await ChangeDeviceState(Main.Constants.HandShakeSnd, portName);
+                await ChangeDeviceState(GTenxor.Constants.HandShakeSnd, portName);
             }
             else if (sender == ToggleButton2)
             {
                 // This is just to send the string to change the device state
-                await ChangeDeviceState(Main.Constants.uniqueID, portName);
+                await ChangeDeviceState(GTenxor.Constants.uniqueID, portName);
             }
             else if (sender == Debugeador)
             {
                 // This is just to send the string to Query device state
-                await ChangeDeviceState(Main.Constants.QueryStatus, portName);
+                await ChangeDeviceState(GTenxor.Constants.QueryStatus, portName);
 
                 // This is just to send the string to change the device state
-                string _data = Main.PrintObjectProperties(Plugin.Settings);
+                string _data = GTenxor.PrintObjectProperties(Plugin.Settings);
                 OutputMsg(_data);
             }
             */
@@ -376,7 +393,7 @@ namespace Bojote.gTenxor
                 }
                 else
                 {
-                    // Try Connecting using the same method from main...    
+                    // Try Connecting using the same method from gTenxor...    
                     if (await TryConnect(currentSelection,BaudRate))
                     {
                         Plugin.Settings.ConnectToSerialDevice = true;
@@ -545,7 +562,7 @@ namespace Bojote.gTenxor
                         if (SerialConnection.IsConnected)
                         {
                             SimHub.Logging.Current.Info("And it was a success (was already connected)");
-                            SerialConnection.ChangeDeviceStateAsync(Main.Constants.uniqueID);
+                            SerialConnection.ChangeDeviceStateAsync(GTenxor.Constants.uniqueID);
                             SimHub.Logging.Current.Info("Our device should be ready to receive data...");
                             isChecked = true;
                             int CurrentbaudRate = SerialConnection.GetBaudRate();
@@ -558,7 +575,7 @@ namespace Bojote.gTenxor
                             SimHub.Logging.Current.Info("Will try to connect to: " + selectedPort);
                             if(SerialConnection.IsConnected) {
                                 SimHub.Logging.Current.Info("And it was a success (Created a new connection)");
-                                SerialConnection.ChangeDeviceStateAsync(Main.Constants.uniqueID);
+                                SerialConnection.ChangeDeviceStateAsync(GTenxor.Constants.uniqueID);
                                 SimHub.Logging.Current.Info("Our device should be ready to receive data...");
                                 isChecked = true;
                                 int CurrentbaudRate = SerialConnection.GetBaudRate();
@@ -687,7 +704,7 @@ namespace Bojote.gTenxor
 
             // Handle it here
             byte[] command;
-            if (identifier == Main.Constants.QueryStatus) // If Only query set Byte 254
+            if (identifier == GTenxor.Constants.QueryStatus) // If Only query set Byte 254
                 command = new byte[] { 254 };
             else
                 command = new byte[] { 255 };
@@ -708,11 +725,11 @@ namespace Bojote.gTenxor
             SimHub.Logging.Current.Info($"Received: {data.Trim()}");
 
             // Process the received data, e.g., check if it meets your criteria
-            if (data.Trim() == Main.Constants.uniqueIDresponse)
+            if (data.Trim() == GTenxor.Constants.uniqueIDresponse)
             {
                 SimHub.Logging.Current.Info($"Received ACK! We are ready to send via serial");
                 // Set SerialOK 
-                Main.SerialOK = true;
+                GTenxor.SerialOK = true;
             }
             Application.Current.Dispatcher.Invoke(() => { OutputMsg(data); });
         }

@@ -10,7 +10,7 @@ namespace Bojote.gTenxor
     [PluginAuthor("Bojote")]
     [PluginName("gTenxor")]
 
-    public class Main : IPlugin, IDataPlugin, IWPFSettingsV2
+    public class GTenxor : IPlugin, IDataPlugin, IWPFSettingsV2
     {
         public static class Constants
         {
@@ -24,6 +24,8 @@ namespace Bojote.gTenxor
         public static string PluginName { get; private set; }
         
         public SerialConnection SerialConnection { get; set; }
+
+        public SettingsControl SettingsControl { get; set; }
 
         // Declared for gameData
         public static bool SerialOK = false;
@@ -264,7 +266,7 @@ namespace Bojote.gTenxor
         }
         public static string GetPluginName()
         {
-            Type mainType = typeof(Main);
+            Type mainType = typeof(GTenxor);
             PluginNameAttribute pluginNameAttribute = mainType.GetCustomAttribute<PluginNameAttribute>();
 
             if (pluginNameAttribute != null)
