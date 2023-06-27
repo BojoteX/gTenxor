@@ -92,6 +92,14 @@ namespace Bojote.gTenxor
             SerialDevicesComboBox.SelectionChanged -= ComboBox_SelectionChanged;
             SerialDevicesComboBox.SelectionChanged += ComboBox_SelectionChanged;
 
+            // Load events from SettingsControl class
+            ConnectCheckBox.Checked -= Connect_Checked;
+            ConnectCheckBox.Unchecked -= Connect_Unchecked;
+            BaudRateComboBox.SelectionChanged -= ComboBox_SelectionChanged;
+            ConnectCheckBox.Checked += Connect_Checked;
+            ConnectCheckBox.Unchecked += Connect_Unchecked;
+            BaudRateComboBox.SelectionChanged += ComboBox_SelectionChanged;
+
             // Connect automatically if setting is active
             Task.Run(() => TryConnect(null,0));
 
@@ -107,7 +115,7 @@ namespace Bojote.gTenxor
         {
             SimHub.Logging.Current.Info($"Will try to watch for USB events...");
             if (!watcherStarted) {
-                string sqlQuery = "SELECT * FROM __InstanceOperationEvent WITHIN 2 WHERE TargetInstance ISA 'Win32_PnPEntity' AND TargetInstance.PNPClass = 'Ports'";
+                string sqlQuery = "SELECT * FROM __InstanceOperationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_PnPEntity' AND TargetInstance.PNPClass = 'Ports'";
 
                 _watcher = new ManagementEventWatcher();
                 _watcher.EventArrived += new EventArrivedEventHandler(USBChangedEvent);
@@ -125,18 +133,31 @@ namespace Bojote.gTenxor
 
         void USBChangedEvent(object sender, EventArrivedEventArgs e)
         {
-            SimHub.Logging.Current.Info($"BEGIN -> USBChanged for {GTenxor.PluginName} from {sender}");
-
             string eventType = e.NewEvent.ClassPath.ClassName;
             ManagementBaseObject targetInstance = (ManagementBaseObject)e.NewEvent["TargetInstance"];
+
+            string description = targetInstance["Name"].ToString();
+            string portName = System.Text.RegularExpressions.Regex.Match(description, @"(COM\d+)").Value;
+
+            // Debugging
+            SimHub.Logging.Current.Info(GTenxor.PrintObjectProperties(sender));
+            SimHub.Logging.Current.Info($"BEGIN -> USBChanged for {GTenxor.PluginName} from {sender} for {eventType} on port {portName}");
+
+            string prevSelection;
+            bool isChecked;
 
             switch (eventType)
             {
                 case "__InstanceDeletionEvent":
-                    Dispatcher.Invoke(async () =>
+                    Dispatcher.Invoke(async() =>
                     {
-                        var oldDevices = SerialConnection.SerialDevices.ToList(); // Create a copy of the old device list
-                        string prevSelection = SerialDevicesComboBox.SelectedItem as string;
+                        prevSelection = SerialDevicesComboBox.SelectedItem as string;
+
+                        SimHub.Logging.Current.Info($"Instance DELETE: current COM port is {prevSelection} and {portName} was disconnected");
+
+                        // Do not continue if disconnected serial port is not the same as current.
+                        if (prevSelection != portName)
+                            return;
 
                         if (ConnectCheckBox.IsChecked == true)
                             prevDeviceStatePermanent = true;
@@ -145,6 +166,10 @@ namespace Bojote.gTenxor
 
                         if (prevDevicePermanent == null)
                             prevDevicePermanent = prevSelection;
+
+                        SimHub.Logging.Current.Info($"Last connected device auto-connect was set to {prevDeviceStatePermanent}");
+
+                        var oldDevices = SerialConnection.SerialDevices.ToList(); // Create a copy of the old device list
 
                         // Allow time after disconnection to refresh the list
                         await Task.Delay(500);
@@ -196,30 +221,36 @@ namespace Bojote.gTenxor
                         }
                         else
                         {
-                            SimHub.Logging.Current.Info($"Do we have to re-sconnect {GTenxor.PluginName}?");
+                            SimHub.Logging.Current.Info($"Do we have to re-connect {GTenxor.PluginName}?");
                             ConnectCheckBox.IsChecked = false;
-                            await Task.Delay(500); // Delay to allow for the above variable to update
+                            await Task.Delay(1000); // Delay to allow for the above variable to update
                             ConnectCheckBox.IsChecked = true;
-                            await Task.Delay(500); // Delay to allow for the above variable to update
+                            await Task.Delay(1000); // Delay to allow for the above variable to update
+
                             GTenxor.SerialOK = true;
                         }
                         SimHub.Logging.Current.Info($"DISCONNECT: The last connected device was {prevDevicePermanent} and Connect Checkbox was set to {prevDeviceStatePermanent}");
                     });
                     break;
                 case "__InstanceCreationEvent":
-                    Dispatcher.Invoke(async () =>
+                    Dispatcher.Invoke(() =>
                     {
-                        bool isChecked;
+                        prevSelection = SerialDevicesComboBox.SelectedItem as string;
+
+                        SimHub.Logging.Current.Info($"Instance CREATE: current COM port is {prevSelection} and {portName} was connected");
+
+                        // Do not continue if the connected serial port and current are not the same and current is NOT set to None.
+                        if (prevSelection != portName && prevSelection != "None")
+                            return;
+
                         // Now load the devices
                         if (prevDeviceStatePermanent == true)
                             isChecked = true;
                         else
                             isChecked = false;
 
-                        SimHub.Logging.Current.Info($"InstanceCreationEvent: Here is where we re-connect {GTenxor.PluginName}");
-
                         // Allow time after re-connection to refresh the list
-                        await Task.Delay(500);
+                        Thread.Sleep(1000);
 
                         SerialConnection.LoadSerialDevices();
                         SerialDevicesComboBox.ItemsSource = SerialConnection.SerialDevices;
@@ -227,20 +258,22 @@ namespace Bojote.gTenxor
                         bool SelectedDev = SerialDevicesComboBox.SelectedItem is string selectedDevice;
                         if (SelectedDev)
                         {
+                            SimHub.Logging.Current.Info($"Here we have a problem, {GTenxor.PluginName} is not reconnecting");
                             if (prevDevicePermanent != null)
                             {
                                 SerialDevicesComboBox.SelectedItem = prevDevicePermanent;
                             }
                             ConnectCheckBox.IsChecked = isChecked;
-                            Plugin.Settings.ConnectToSerialDevice = true;
                         }
                         else
                         {
                             SimHub.Logging.Current.Info($"InstanceCreationEvent: Here is where we disconnect {GTenxor.PluginName}");
                             Plugin.Settings.SelectedSerialDevice = "None";
                             SerialDevicesComboBox.SelectedItem = "None";
+                            ConnectCheckBox.IsChecked = false;
+                            Plugin.Settings.ConnectToSerialDevice = false;
                         }
-                        SimHub.Logging.Current.Info($"CONNECT: The last connected device was {prevDevicePermanent} and Connect Checkbox was set to {prevDeviceStatePermanent}");
+                        SimHub.Logging.Current.Info($"CONNECT: The last connected device was {prevDevicePermanent} and Connect Checkbox was set to {isChecked}");
                     });
                     break;
             }
@@ -256,12 +289,18 @@ namespace Bojote.gTenxor
                 string prevDevice;
                 bool prevDeviceState;
 
-                // Set my current values
-                prevDevice = SerialDevicesComboBox.SelectedItem as string;
-                if (ConnectCheckBox.IsChecked == true)
-                    prevDeviceState = true;
+                if(prevDeviceStatePermanent)
+                    ConnectCheckBox.IsChecked = false;
+
+                if (prevDevicePermanent != null)
+                    prevDevice = prevDevicePermanent;
                 else
-                    prevDeviceState = false;
+                    prevDevice = SerialDevicesComboBox.SelectedItem as string;
+
+                if (prevDeviceStatePermanent)
+                    prevDeviceState = prevDeviceStatePermanent;
+                else
+                    prevDeviceState = (bool)ConnectCheckBox.IsChecked;
 
                 // Update the ComboBox items when SerialDevices property changes
                 // Now load the devices
@@ -297,11 +336,6 @@ namespace Bojote.gTenxor
 
         private void SettingsControl_Loaded(object sender, RoutedEventArgs e)
         {
-            // Load events from SettingsControl class
-            ConnectCheckBox.Checked += Connect_Checked;
-            ConnectCheckBox.Unchecked += Connect_Unchecked;
-            BaudRateComboBox.SelectionChanged += ComboBox_SelectionChanged;
-
             SimHub.Logging.Current.Info("BEGIN -> SettingsControl_Loaded");
             if (SerialConnection != null)
             {
@@ -317,12 +351,6 @@ namespace Bojote.gTenxor
         private void SettingsControl_Unloaded(object sender, RoutedEventArgs e)
         {
             SimHub.Logging.Current.Info("BEGIN -> SettingsControl_UnLoaded");
-
-            // UnLoad events from SettingsControl class
-            ConnectCheckBox.Checked -= Connect_Checked;
-            ConnectCheckBox.Unchecked -= Connect_Unchecked;
-            BaudRateComboBox.SelectionChanged -= ComboBox_SelectionChanged;
-
             SimHub.Logging.Current.Info("END -> SettingsControl_UnLoaded");
         }
 
