@@ -11,7 +11,6 @@
         public int DecelGain { get; set; }
         public int YawGain { get; set; }
         public int Smooth { get; set; }
-        public int Deadzone { get; set; }
         public bool MaxTest { get; set; }
         public bool SwayReversed { get; set; }
         public bool DecelReversed { get; set; }

@@ -22,13 +22,13 @@ namespace Bojote.gTenxor
         }
 
         public static string PluginName { get; private set; }
-        
-        public SerialConnection SerialConnection { get; set; }
-
-        public SettingsControl SettingsControl { get; set; }
 
         // Declared for gameData
         public static bool SerialOK = false;
+
+        public SerialConnection SerialConnection { get; set; }
+
+        public SettingsControl SettingsControl { get; set; }
 
         // Low Pass Filter variables for servo operation
         double prevDecel = 0;
@@ -76,13 +76,24 @@ namespace Bojote.gTenxor
                         double decel = Settings.DecelGain * (data.NewData.AccelerationSurge ?? 0) * (Settings.DecelReversed ? -1 : 1);
                         double sway = Settings.YawGain * (data.NewData.AccelerationSway ?? 0) * (Settings.SwayReversed ? -1 : 1);
 
-                        // Adjust the filter strength from 0 (no filtering) to 10 (heavy filtering)
-                        int filterStrength = Settings.Smooth;
-                        double alpha = 2.0 / (filterStrength + 1.0);
+                        double decelFiltered;
+                        double swayFiltered;
 
-                        // Apply the low-pass filter
-                        double decelFiltered = prevDecel + alpha * (decel - prevDecel);
-                        double swayFiltered = prevSway + alpha * (sway - prevSway);
+                        // If smooth is 0 simply bypass the filter...
+                        if (Settings.Smooth == 0)
+                        {
+                            // Bypass the filter
+                            decelFiltered = decel;
+                            swayFiltered = sway;
+                        }
+                        else
+                        {
+                            // Apply the low-pass filter
+                            int filterStrength = Settings.Smooth;
+                            double alpha = 2.0 / (filterStrength + 1.0);
+                            decelFiltered = prevDecel + alpha * (decel - prevDecel);
+                            swayFiltered = prevSway + alpha * (sway - prevSway);
+                        }
 
                         prevDecel = decelFiltered;
                         prevSway = swayFiltered;
@@ -95,22 +106,6 @@ namespace Bojote.gTenxor
                         // Compute l and r
                         double r = Math.Sqrt(decelSquared + swaySquared);
                         double l = decelDoubled - r;
-
-                        // Apply deadzone to the servo positions
-                        double deadzoneRange = Settings.Deadzone; // Adjust this value based on your desired deadzone range
-                        double deadzoneCenter = 0.0; // Adjust this value if you want the deadzone centered around a different position
-
-                        // Apply deadzone to the left servo position
-                        if (Math.Abs(l) <= deadzoneCenter + deadzoneRange / 2.0)
-                        {
-                            l = deadzoneCenter;
-                        }
-
-                        // Apply deadzone to the right servo position
-                        if (Math.Abs(r) <= deadzoneCenter + deadzoneRange / 2.0)
-                        {
-                            r = deadzoneCenter;
-                        }
 
                         // Swap if necessary (be careful + or - values have an effect on which servo is being affected)
                         if (swayFiltered < 0)
@@ -237,13 +232,12 @@ namespace Bojote.gTenxor
                 SelectedSerialDevice = "None",
                 ConnectToSerialDevice = false,
                 SelectedBaudRate = "115200",
-                Deadzone = 5,
                 LeftOffset = 15,
                 RightOffset = 15,
                 Tmax = 180,
                 DecelGain = 5,
                 YawGain = 5,
-                Smooth = 10,
+                Smooth = 3,
                 MaxTest = false,
                 SwayReversed = false,
                 DecelReversed = false

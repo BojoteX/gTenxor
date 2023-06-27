@@ -19,12 +19,12 @@ namespace Bojote.gTenxor
 
         // Some custom variables 
         private ManagementEventWatcher _watcher;
-        private string prevDevicePermanent; // Declare the shared variable
-        private bool prevDeviceStatePermanent; // Declare the shared variable
         public bool isReady = false; // Declare the shared variable
 
         // Static variables
         private static bool watcherStarted = false;
+        private static bool prevDeviceStatePermanent; // Declare the shared variable
+        private static string prevDevicePermanent; // Declare the shared variable
 
         public SerialConnection SerialConnection { get; set; }
 
@@ -455,7 +455,6 @@ namespace Bojote.gTenxor
                 DecelGain.IsEnabled = false;
                 YawGain.IsEnabled = false;
                 Smooth.IsEnabled = false;
-                Deadzone.IsEnabled = false;
 
                 SerialCommand(sender);
             }
@@ -472,7 +471,6 @@ namespace Bojote.gTenxor
                 DecelGain.IsEnabled = true;
                 YawGain.IsEnabled = true;
                 Smooth.IsEnabled = true;
-                Deadzone.IsEnabled = true;
 
                 SerialCommand(sender);
             }
