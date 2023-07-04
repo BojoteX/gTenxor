@@ -1,8 +1,9 @@
 ﻿using GameReaderCommon;
 using SimHub.Plugins;
 using System;
+using System.IO.Ports;
 using System.Reflection;
-using System.Threading;
+using System.Windows;
 using System.Windows.Media;
 
 namespace Bojote.gTenxor
@@ -128,7 +129,15 @@ namespace Bojote.gTenxor
                         byte rightServoAngle = (byte)Math.Round(r);
 
                         byte[] serialData = new byte[] { leftServoAngle, rightServoAngle };
-                        SerialConnection.SerialPort.Write(serialData, 0, 2);
+                        SerialConnection.SerialPort.Write(serialData, 0, serialData.Length);
+                    }
+                    else
+                    {
+                        if (SerialConnection.IsConnected)
+                        {
+                            byte[] serialData = new byte[] { (byte)Settings.LeftOffset, (byte)Settings.RightOffset };
+                            SerialConnection.SerialPort.Write(serialData, 0, serialData.Length);
+                        }
                     }
                 }
             }
@@ -197,18 +206,13 @@ namespace Bojote.gTenxor
             // Declare an action which can be called
             this.AddAction("ToggleLiveBelt", (a, b) =>
             {
-                if (SerialOK)
-                {
-                    SerialOK = false;
-                    Thread.Sleep(100);
-                    if (SerialConnection.IsConnected) { 
-                        byte[] serialData = new byte[] { (byte)Settings.LeftOffset, (byte)Settings.RightOffset };
-                        SerialConnection.SerialPort.Write(serialData, 0, serialData.Length);
-                    }
-                }
-                else { 
-                    SerialOK = true; 
-                }   
+            if (SerialOK) {
+                SerialOK = false;
+                SimHub.Logging.Current.Info($"Servo Reset");
+            }
+            else { 
+                SerialOK = true; 
+            }   
             });
 
             // Declare an event
