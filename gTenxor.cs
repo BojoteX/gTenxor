@@ -2,6 +2,7 @@
 using SimHub.Plugins;
 using System;
 using System.Reflection;
+using System.Threading;
 using System.Windows.Media;
 
 namespace Bojote.gTenxor
@@ -197,9 +198,17 @@ namespace Bojote.gTenxor
             this.AddAction("ToggleLiveBelt", (a, b) =>
             {
                 if (SerialOK)
+                {
                     SerialOK = false;
-                else
-                    SerialOK = true;
+                    Thread.Sleep(100);
+                    if (SerialConnection.IsConnected) { 
+                        byte[] serialData = new byte[] { (byte)Settings.LeftOffset, (byte)Settings.RightOffset };
+                        SerialConnection.SerialPort.Write(serialData, 0, serialData.Length);
+                    }
+                }
+                else { 
+                    SerialOK = true; 
+                }   
             });
 
             // Declare an event
@@ -237,7 +246,7 @@ namespace Bojote.gTenxor
                 Tmax = 180,
                 DecelGain = 5,
                 YawGain = 5,
-                Smooth = 3,
+                Smooth = 5,
                 MaxTest = false,
                 SwayReversed = false,
                 DecelReversed = false
