@@ -135,7 +135,7 @@ namespace Bojote.gTenxor
                     {
                         if (SerialConnection.IsConnected)
                         {
-                            byte[] serialData = new byte[] { (byte)Settings.LeftOffset, (byte)Settings.RightOffset };
+                            byte[] serialData = new byte[] { 0, 0 };
                             SerialConnection.SerialPort.Write(serialData, 0, serialData.Length);
                         }
                     }
