@@ -240,7 +240,7 @@ namespace Bojote.gTenxor
                         SimHub.Logging.Current.Info($"Instance CREATE: current COM port is {prevSelection} and {portName} was connected");
 
                         // Do not continue if the connected serial port and current are not the same and current is NOT set to None.
-                        if (prevSelection != portName && prevSelection != "None")
+                        if (prevSelection != portName && prevSelection != "None" && prevSelection != null)
                             return;
 
                         // Now load the devices
@@ -258,7 +258,6 @@ namespace Bojote.gTenxor
                         bool SelectedDev = SerialDevicesComboBox.SelectedItem is string selectedDevice;
                         if (SelectedDev)
                         {
-                            SimHub.Logging.Current.Info($"Here we have a problem, {GTenxor.PluginName} is not reconnecting");
                             if (prevDevicePermanent != null)
                             {
                                 SerialDevicesComboBox.SelectedItem = prevDevicePermanent;
