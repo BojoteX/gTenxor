@@ -2,9 +2,11 @@
 
 ## Description
 
-The gTenxor plugin is designed to enhance your simulation experience by controlling a seat belt/harness based on telemetry data. The plugin works by reading the telemetry data provided by the game, then it manipulates the belt tension via servos connected through a serial port. This mechanism simulates the forces experienced by the player in response to in-game acceleration, deceleration, and swaying.
+The gTenxor plugin is designed to enhance your simulation experience by controlling a seat belt/harness based on telemetry data. The plugin works by reading the telemetry data provided by the game, then it manipulates the belt tension via servos connected through a serial port. This mechanism simulates the forces experienced by the player in response to in-game acceleration, deceleration, and swaying. 
 
 The gTenxor plugin provides an adjustable maximum limit for the tension in the harness, controllable gain parameters, and filter strength for tailoring the simulated forces to the user's preferences. Moreover, it allows for testing, reversing of surge/sway forces, and includes a feature to automatically reset the servos when the game stops running.
+
+You need the gTenxor servo control unit in order for this plugin to function, however this is NOT a requirement as you could use an Arduino UNO instead and connect your servo's to PWM pins 9 and 10 provided you can power your servo's externally. The sketch file is also provided and can be downloaded from the Hardware directory. The control unit (gTenxor) is an all-in-one device that is basically a plug & play solution for people that want to implement the active belt tensioning solution in the fastest and easiest way possible. If you are interested in testing the prototype (for free) let me know and I would ship one to you for free (ONLY in the continental US)
 
 ## Main Features
 
