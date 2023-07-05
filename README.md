@@ -8,7 +8,7 @@ The gTenxor plugin provides an adjustable maximum limit for the tension in the h
 
 ![gTenxor Device](./images/gTenxor.jpg)
 
-You need the gTenxor servo control unit in order for this plugin to function, however this is NOT a requirement as you could use an Arduino UNO instead and connect your servo's to PWM pins 9 and 10 provided you can power your servo's externally. The sketch file is also provided and can be downloaded from the Hardware directory. The control unit (gTenxor) is an all-in-one device that is basically a plug & play solution for people that want to implement the active belt tensioning solution in the fastest and easiest way possible. If you are interested in testing the prototype (for free) let me know and I would ship one to you for free (ONLY in the continental US)
+You need the gTenxor servo control unit (pictured above) in order for this plugin to function, however this is NOT a requirement as you could use an Arduino UNO instead and connect your servo's to PWM pins 9 and 10 provided you can power your servo's externally. The sketch file is also provided and can be downloaded from the Hardware directory. The control unit (gTenxor) is an all-in-one device that is basically a plug & play solution for people that want to implement the active belt tensioning solution in the fastest and easiest way possible. If you are interested in testing the prototype (for free) let me know and I would ship one to you for free (ONLY in the continental US)
 
 ## Main Features
 
