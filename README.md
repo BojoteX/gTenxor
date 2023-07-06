@@ -37,11 +37,14 @@ To install the gTenxor plugin, just copy the DLL file in the directory where Sim
 
 Please note that you will need to adjust the settings to match your specific setup, including the correct serial device and baud rate. For more detailed installation and setup instructions, please refer to the specific sections below.
 
+[![Watch the video](https://i.ytimg.com/an_webp/l9lmErAqP-A/mqdefault_6s.webp?du=3000&sqp=COCOmKUG&rs=AOn4CLCP60Jo6aUoLz54wm8aCscHpJe0Yw)](https://youtu.be/l9lmErAqP-A)
+
 ## Acknowledgments
 
 This project makes use of portions of code (Arduino sketches) from the following contributors:
 
 - [Arduino Blue Pill](https://github.com/blekenbleu/Arduino-Blue-Pill) by [blekenbleu](https://github.com/blekenbleu/)
+
 
 ## License
 MIT License
