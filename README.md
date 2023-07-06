@@ -37,9 +37,11 @@ To install the gTenxor plugin, just copy the DLL file in the directory where Sim
 
 Please note that you will need to adjust the settings to match your specific setup, including the correct serial device and baud rate. For more detailed installation and setup instructions, please refer to the specific sections below.
 
-## See it in action below (click the image)
+## See it in action
 
-[![Watch the video](https://i.ytimg.com/an_webp/l9lmErAqP-A/mqdefault_6s.webp?du=3000&sqp=COCOmKUG&rs=AOn4CLCP60Jo6aUoLz54wm8aCscHpJe0Yw)](https://youtu.be/l9lmErAqP-A)
+You can see the actual gTenxor by watching the following YouTube video.
+
+[![Watch the video](https://i.ytimg.com/an_webp/l9lmErAqP-A/mqdefault_6s.webp?du=3000&sqp=COCOmKUG&rs=AOn4CLCP60Jo6aUoLz54wm8aCscHpJe0Yw)]([https://youtu.be/l9lmErAqP-A](https://www.youtube.com/watch?v=l9lmErAqP-A&list=PL9vN_0REFysmFwnwk_gS93T0JfUjy-zmM))
 
 
 
