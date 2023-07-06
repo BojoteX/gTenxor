@@ -41,7 +41,7 @@ Please note that you will need to adjust the settings to match your specific set
 
 This project makes use of portions of code (Arduino sketches) from the following contributors:
 
-- [Arduino Blue Pill](https://github.com/blekenbleu/Arduino-Blue-Pill) by [blekenbleu](https://github.com/blekenbleu/Arduino-Blue-Pill)
+- [Arduino Blue Pill](https://github.com/blekenbleu/Arduino-Blue-Pill) by [blekenbleu](https://github.com/blekenbleu/)
 
 ## License
 MIT License
