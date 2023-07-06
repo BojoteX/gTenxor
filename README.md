@@ -41,7 +41,7 @@ Please note that you will need to adjust the settings to match your specific set
 
 You can see the actual gTenxor by watching the following YouTube video.
 
-[![Watch the video](https://i.ytimg.com/an_webp/l9lmErAqP-A/mqdefault_6s.webp?du=3000&sqp=COCOmKUG&rs=AOn4CLCP60Jo6aUoLz54wm8aCscHpJe0Yw)](https://www.youtube.com/watch?v=l9lmErAqP-A&list=PL9vN_0REFysmFwnwk_gS93T0JfUjy-zmM))
+[![Watch the video](./images/thumbnail.webp)](https://www.youtube.com/watch?v=l9lmErAqP-A&list=PL9vN_0REFysmFwnwk_gS93T0JfUjy-zmM))
 
 
 
