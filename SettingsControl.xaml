@@ -218,13 +218,14 @@
                     <TextBlock Width="720" TextWrapping="Wrap" TextAlignment="Justify" Text="USB Port monitoring is only necessary if you require the plugin to constantly monitor the USB port for changes. This means that while USB port monitoring is Enabled (checked) the plugin will detect connections and disconnections which could slightly increase CPU usage. Disable only if you have a stable installation. Enable if your device constantly disconnects and you need to ensure that it connects again automatically."/>
                     </StackPanel>
 
-                <StackPanel Margin="0,10,0,10">
-                    <styles:SHSectionTitle x:Name="Actions" HorizontalAlignment="Left">Custom actions</styles:SHSectionTitle>
-                </StackPanel>
+                    <StackPanel Margin="0,10,0,10">
+                        <styles:SHSectionTitle x:Name="Actions" HorizontalAlignment="Left">Custom actions</styles:SHSectionTitle>
+                    </StackPanel>
 
-                <StackPanel Margin="0,0,0,0">
+                    <StackPanel Margin="0,0,0,0">
                         <ui:ControlsEditor FriendlyName="Toggle Live Belt" ActionName="GTenxor.ToggleLiveBelt"></ui:ControlsEditor>
                     </StackPanel>
+                    
                 </StackPanel>
             
         </Grid>
