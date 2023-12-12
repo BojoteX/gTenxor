@@ -108,12 +108,12 @@
                           Unchecked="CheckBox_Unchecked" />
 
                     <StackPanel Margin="0,10">
-                        <styles:SHButtonPrimary x:Name="AutodetectButton" HorizontalAlignment="Left" Click="Button_Click">Autodetect Device</styles:SHButtonPrimary>
+                        <TextBlock Width="200" Height="110" TextWrapping="Wrap" TextAlignment="Justify" Text="Sway and Surge gain are used to tweak gForce sensitivity. A value of 5 is recommended. Smooth helps minimize servo micro adjustments. A value of 5 is recommended. Setting it to 0 completely disables the low pass filter (not recommended)"/>
                     </StackPanel>
 
                     <StackPanel Margin="0,10">
-                    <TextBlock Width="200" Height="110" TextWrapping="Wrap" TextAlignment="Justify" Text="Sway and Surge gain are used to tweak gForce sensitivity. A value of 5 is recommended. Smooth helps minimize servo micro adjustments. A value of 5 is recommended. Setting it to 0 completely disables the low pass filter (not recommended)"/>
-                </StackPanel>
+                        <styles:SHButtonPrimary x:Name="AutodetectButton" HorizontalAlignment="Left" Click="Button_Click">Autodetect Device</styles:SHButtonPrimary>
+                    </StackPanel>
 
                 <!--
 
@@ -187,7 +187,7 @@
                         </StackPanel>
                     </StackPanel>
 
-            </StackPanel>
+                </StackPanel>
 
                 <StackPanel Grid.Column="2" Margin="30,0,0,10">
 
@@ -204,8 +204,26 @@
                 </StackPanel>
 
                 <StackPanel Margin="0,0,0,0" Grid.ColumnSpan="3" Grid.Row="1" Grid.Column="0">
-                    <StackPanel Margin="0,0,0,0">
-                    <ui:ControlsEditor FriendlyName="Toggle Live Belt" ActionName="GTenxor.ToggleLiveBelt"></ui:ControlsEditor>
+
+                    <StackPanel Margin="0,10,0,10">
+                        <styles:SHSectionTitle x:Name="Misc" HorizontalAlignment="Left">Misc Settings</styles:SHSectionTitle>
+                    </StackPanel>
+
+                    <CheckBox x:Name="USBCheck" Content="USB port monitoring" Margin="0,0,0,10"
+                          IsChecked="{Binding USBCheck}"
+                          Checked="CheckBox_Checked"
+                          Unchecked="CheckBox_Unchecked" />
+
+                    <StackPanel Margin="0,10">
+                    <TextBlock Width="720" TextWrapping="Wrap" TextAlignment="Justify" Text="USB Port monitoring is only necessary if you require the plugin to constantly monitor the USB port for changes. This means that while USB port monitoring is Enabled (checked) the plugin will detect connections and disconnections which could slightly increase CPU usage. Disable only if you have a stable installation. Enable if your device constantly disconnects and you need to ensure that it connects again automatically."/>
+                    </StackPanel>
+
+                <StackPanel Margin="0,10,0,10">
+                    <styles:SHSectionTitle x:Name="Actions" HorizontalAlignment="Left">Custom actions</styles:SHSectionTitle>
+                </StackPanel>
+
+                <StackPanel Margin="0,0,0,0">
+                        <ui:ControlsEditor FriendlyName="Toggle Live Belt" ActionName="GTenxor.ToggleLiveBelt"></ui:ControlsEditor>
                     </StackPanel>
                 </StackPanel>
             

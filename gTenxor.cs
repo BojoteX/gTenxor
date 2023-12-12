@@ -1,9 +1,7 @@
 ﻿using GameReaderCommon;
 using SimHub.Plugins;
 using System;
-using System.IO.Ports;
 using System.Reflection;
-using System.Windows;
 using System.Windows.Media;
 
 namespace Bojote.gTenxor
@@ -64,6 +62,7 @@ namespace Bojote.gTenxor
         /// <param name="data">Current game data, including current and previous data frame.</param>
         public void DataUpdate(PluginManager pluginManager, ref GameData data)
         {
+
             // Define the value of our property (declared in init)
             if (data.GameRunning)
             {
@@ -253,7 +252,8 @@ namespace Bojote.gTenxor
                 Smooth = 5,
                 MaxTest = false,
                 SwayReversed = false,
-                DecelReversed = false
+                DecelReversed = false,
+                USBCheck = true
             };
             return settings;
         }

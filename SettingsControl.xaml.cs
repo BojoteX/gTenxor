@@ -104,7 +104,8 @@ namespace Bojote.gTenxor
             Task.Run(() => TryConnect(null,0));
 
             // Need to figure out a more efficient way to do this and limit it to com ports only..
-            WatchForUSBChanges();
+            if (Plugin.Settings.USBCheck)
+                   WatchForUSBChanges();
 
             isReady = true;
 

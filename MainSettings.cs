@@ -14,5 +14,6 @@
         public bool MaxTest { get; set; }
         public bool SwayReversed { get; set; }
         public bool DecelReversed { get; set; }
+        public bool USBCheck { get; set; }
     }
 }
